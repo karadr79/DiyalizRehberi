@@ -10,4 +10,4 @@ Kronik hemodiyaliz ve periton diyalizi hastalarının aylık izlem ve tedavi pla
 
 Klinik karar desteği amaçlıdır; hasta özelinde hekim değerlendirmesinin yerini tutmaz.
 
-Prof. Dr. Ekrem Kara
+Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu

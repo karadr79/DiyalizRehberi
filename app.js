@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara', VER = '0.3', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.3', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -50,7 +50,7 @@
   }
 
   /* ---------------- Ortak parçalar ---------------- */
-  const authors = () => `<div class="authors"><span><i>EK</i>Prof. Dr. Ekrem KARA</span></div>`;
+  const authors = () => `<div class="authors"><span><i>EK</i>Prof. Dr. Ekrem KARA</span><span><i>TŞ</i>Prof. Dr. Tuncay ŞAHUTOĞLU</span></div>`;
   const disc = () => `<p class="disclaimer">Klinik karar desteği amaçlıdır; hasta özelinde hekim değerlendirmesinin ve ünite protokollerinin yerini tutmaz. Öneriler reçete değildir; uygulama kararı hekime aittir. Sürüm ${VER} · ${VDATE}</p>`;
   function fieldHTML(f, val, attr, idp) {
     const id = idp + f.k, lab = `<label for="${id}">${esc(f.l)}${f.u ? `<u>${esc(f.u)}</u>` : ''}</label>`, v = val == null ? '' : val; let inp;
