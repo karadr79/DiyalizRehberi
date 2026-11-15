@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8.1', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -194,6 +194,7 @@
       const o = $('#out-' + g); if (o) { const d = der.filter(x => x.g === g); patch(o, d.map(x => [g + '|' + x.l, `<div${typeof x.v === 'string' && x.v.length > 24 ? ' class="kvw"' : ''}><small>${esc(x.l)}</small><strong>${fmt(x.v, x.d)}</strong> ${esc(x.u)}${x.note ? `<em>${esc(x.note)}</em>` : ''}</div>`]), (el, yeni) => pop(el, yeni ? 'dv-new' : 'dv-pop'), !!seen); o.hidden = !d.length; }
       const r = $('#rec-' + g); if (r) { const rs = ev.recs.filter(x => x.g === g); if (!rs.length) { r.innerHTML = g === 'mev' ? '<p class="cap">Bu ay için mevzuat hatırlatması yok.</p>' : ''; } else { if (r.querySelector(':scope > p.cap')) r.innerHTML = ''; patch(r, rs.map(x => [x.id, recHTML(x, v, !p.temp)]), (el, yeni) => { if (yeni && seen && !seen.has(el.dataset.key)) pop(el, 'rec-new'); else if (!yeni) pop(el, 'dv-pop'); }, !!seen); } }
     });
+    const ti = $('#v-tsat'); if (ti) { const sm = ti.closest('.f') && ti.closest('.f').querySelector('small'); ti.placeholder = ev.c.tsatHes != null ? D.tr(ev.c.tsatHes, 1) + ' (hesaplandı)' : ''; if (sm && !ti.value) sm.dataset.h = ev.c.tsatHes != null ? 'Demir / TDBK’den hesaplandı: %' + D.tr(ev.c.tsatHes, 1) : 'Boşsa demir / TDBK’den hesaplanır'; }
     const bad = new Set(ev.range.map(f => f.k));
     $$('#view .f[data-f]').forEach(el => { const k = el.dataset.f, f = fm[k], sm = el.querySelector('small'); if (!f || !sm || !el.querySelector('[data-k]')) return; const e = bad.has(k); el.classList.toggle('err', e); sm.textContent = e ? `Beklenen aralık ${D.tr(f.mn)}–${D.tr(f.mx)}; hesaba alınmadı` : sm.dataset.h; });
     const pb = $('#plan'); if (pb) { if (!ev.plan.length) pb.innerHTML = '<p class="cap">Doz önerisi için Hb, ferritin, Ca, P, iPTH ve K değerlerini ve mevcut ilaçları girin.</p>'; else { if (pb.querySelector(':scope > p.cap')) pb.innerHTML = ''; patch(pb, ev.plan.map(r => ['rx-' + r.k, rxHTML(r, v, !p.temp)]), (el, yeni) => pop(el, yeni ? 'rec-new' : 'dv-pop'), !!seen); } }

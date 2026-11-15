@@ -308,6 +308,7 @@
     /* Anemi ve KBH-MKB: HD ve PD ortak */
     var hb = g('hb'), esa = v.esa, ed = g('esaDoz'), kg = m === 'HD' ? (g('postW') != null ? g('postW') : g('kuru')) : (g('kilo') != null ? g('kilo') : g('hedef'));
     c.esaVar = !!esa && esa !== 'Yok' && (ed == null || ed > 0);
+    if ((v.tsat == null || v.tsat === '') && g('fe') != null && g('tdbk')) c.tsatHes = g('tsat');
     if (c.esaVar && ed != null && kg) { var iu = /Epoetin/.test(esa) ? ed : (/Darbe/.test(esa) ? ed * 200 : null); if (iu != null) { c.esaKg = r1(iu / kg); if (hb != null) c.eri = r1(iu / kg / hb); } }
     c.mod = m; var ust = g('pthUst') != null ? g('pthUst') : 65; c.pthUst = ust; c.pthUstVars = g('pthUst') == null;
     if (g('pth') != null) c.pthX = r1(g('pth') / ust);
@@ -933,6 +934,7 @@
   }
   function ANEMKB(add, c) {
     add('ane', 'ESA dozu / kg', c.esaKg, 'IU/kg/hafta', 1, 'darbepoetin 1 µg ≈ 200 IU kabulüyle');
+    add('ane', 'TSAT (hesaplanan)', c.tsatHes, '%', 1, 'serum demiri / TDBK × 100');
     add('ane', 'ESA direnç indeksi (ERI)', c.eri, 'IU/kg/hafta/(g/dL)', 1, 'haftalık doz / kg / Hb');
     add('mkb', 'Düzeltilmiş kalsiyum', c.dcaAlb ? c.dca : null, 'mg/dL', 2, 'Ca + 0,8 × (4 − albümin); albümin Diğer laboratuvar bölümünden');
     add('nut', 'BMI', c.bmi, 'kg/m²', 1);
