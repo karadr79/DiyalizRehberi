@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.4', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.5', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -168,9 +168,12 @@
   const TDUR = { yok: ['bad', 'Kayıt yok'], gecikti: ['warn', 'Zamanı geldi'], guncel: ['ok', 'Güncel'] };
   function takvimHTML(p, ay) {
     const t = D.takvim(p, ay), n = t.filter(x => x.durum !== 'guncel').length;
+    const rows = a => a.map(x => `<tr><td>${esc(x.l)}</td><td class="n">${x.i} ay</td><td>${x.son ? ayKisa(x.son) : '—'}</td><td>${x.sonraki ? ayKisa(x.sonraki) : '—'}</td><td><span class="pill ${TDUR[x.durum][0]}">${TDUR[x.durum][1]}</span></td><td class="cap">${esc(x.src)}</td></tr>`).join('');
+    const head = '<thead><tr><th>Tetkik</th><th class="n">Aralık</th><th>Son kayıt</th><th>Sonraki</th><th>Durum</th><th>Dayanak</th></tr></thead>';
     return `<div class="sechead"><h2>Tetkik takvimi</h2><span class="cap">${ayAd(ay)} itibarıyla · ${n} tetkikin zamanı gelmiş veya kaydı yok</span></div>
-      <div class="tbl"><table><thead><tr><th>Tetkik</th><th class="n">Aralık</th><th>Son kayıt</th><th>Sonraki</th><th>Durum</th><th>Dayanak</th></tr></thead><tbody>${t.map(x => `<tr><td>${esc(x.l)}</td><td class="n">${x.i} ay</td><td>${x.son ? ayKisa(x.son) : '—'}</td><td>${x.sonraki ? ayKisa(x.sonraki) : '—'}</td><td><span class="pill ${TDUR[x.durum][0]}">${TDUR[x.durum][1]}</span></td><td class="cap">${esc(x.src)}</td></tr>`).join('')}</tbody></table></div>
-      <p class="cap">Aralıklar kılavuz önerilerine göredir; hastanın tedavisine göre (ESA, aktif D vitamini, hepatit B bağışıklığı) değişir. Yönetmeliğin EK-3 tetkik listesi bu sürüme eklenmemiştir.</p>`;
+      <h3>Yönetmelik EK-3</h3><div class="tbl"><table>${head}<tbody>${rows(t.filter(x => x.ek3))}</tbody></table></div>
+      <h3>Kılavuz önerileri (EK-3 dışında)</h3><div class="tbl"><table>${head}<tbody>${rows(t.filter(x => !x.ek3))}</tbody></table></div>
+      <p class="cap">Kan grubu ile başlangıçtaki HIV ve hepatit testleri ilk kabulde yapılır. ${p.mod === 'HD' ? 'Hepatit göstergeleri negatif hastada HBsAg, anti-HBs ve anti-HCV 3 ayda bir; anti-HBs pozitifse HBsAg ve anti-HBs 6 ayda bir; göstergeler pozitifse yılda bir bakılır.' : 'PET başlangıçtan 4–8 hafta sonra yapılır, sonra klinik gereklilikle yinelenir; bağlantı seti tekrarlayan peritonitten sonra daha erken değiştirilir.'}</p>`;
   }
   function trend(p) {
     const ms = D.sortedMonths(p).slice(-12), cs = ms.map(a => D.compute(p, p.visits[a], a));
@@ -205,7 +208,7 @@
   const OX = { c: {}, v: {}, p: {}, n: () => null, prevOf: () => null };
   const ruleText = r => { if (typeof r.o !== 'function') return r.o; try { return r.o(OX); } catch (e) { return '(metin hasta verisine göre oluşturulur)'; } };
   /* ---------------- Yönetmelik ---------------- */
-  const KEYART = ['Madde 6', 'Madde 12', 'Madde 19', 'Madde 22', 'Madde 23', 'Madde 28', 'Madde 31', 'Madde 32', 'Madde 34', 'Geçici Madde 2'];
+  const KEYART = ['Madde 6', 'Madde 22', 'Madde 23', 'Madde 31', 'Madde 32', 'Geçici Madde 2', 'EK-3'];
   function yonList(q) {
     const A = window.YONETMELIK || [], ql = (q || '').toLocaleLowerCase('tr'), hl = s => { s = esc(s); if (ql.length < 2) return s; const i = s.toLocaleLowerCase('tr').indexOf(ql); return i < 0 ? s : s.slice(0, i) + '<mark>' + s.slice(i, i + ql.length) + '</mark>' + s.slice(i + ql.length); };
     let b = '', out = '', n = 0;
@@ -220,7 +223,7 @@
       <div class="row">${KEYART.map(k => `<button class="rt-chip" data-act="yjump" data-id="y-${k.replace(/\s/g, '')}">${k}</button>`).join('')}</div>
       <div class="f"><label for="yq">Yönetmelikte ara</label><input id="yq" type="search" placeholder="ör. rapor, sertifikalı, reuse, ev hemodiyalizi" autocomplete="off"></div>
       <div id="ylist" style="display:flex;flex-direction:column;gap:6px">${yonList('')}</div>
-      <p class="cap">Metin, Resmî Gazete’de yayımlanan ana metindir; ekler (EK-1 ile EK-10) bu sürümde yer almaz. Bağlayıcı olan Resmî Gazete metnidir.</p>`;
+      <p class="cap">Ana metin Resmî Gazete’de yayımlanan metindir. Eklerden yalnız EK-3 (tetkikler) yer alır; EK-3 metni yazarlarca sağlanmıştır. Bağlayıcı olan Resmî Gazete metnidir.</p>`;
   }
 
   /* ---------------- Veri ve yedek ---------------- */
