@@ -94,7 +94,7 @@
     { k: 'tdbk', l: 'Total demir bağlama kapasitesi', u: 'µg/dL', t: 'n', mn: 50, mx: 800 },
     { k: 'esa', l: 'ESA', t: 's', c: 1, o: ['Yok', 'Epoetin alfa/beta', 'Darbepoetin alfa', 'Metoksi-PEG epoetin beta (CERA)'] },
     { k: 'esaDoz', l: 'ESA dozu', u: 'IU veya µg', t: 'n', c: 1, mn: 0, mx: 60000, h: 'Epoetin: IU/hafta · Darbepoetin: µg/hafta · CERA: µg/ay' },
-    { k: 'demir', l: 'Demir tedavisi', t: 's', c: 1, o: ['Yok', 'IV demir sükroz', 'IV ferrik karboksimaltoz', 'IV diğer', 'Oral demir'] },
+    { k: 'demir', l: 'Demir tedavisi', t: 's', c: 1, o: ['Yok', 'IV demir sükroz', 'IV ferrik karboksimaltoz', 'IV ferrik derisomaltoz', 'IV sodyum ferrik glukonat', 'IV demir dekstran (düşük molekül ağırlıklı)', 'IV diğer', 'Oral demir'] },
     { k: 'demirDoz', l: 'Demir dozu (IV)', u: 'mg/ay', t: 'n', c: 1, mn: 0, mx: 3000 },
     { k: 'hifphi', l: 'HIF-PHI', t: 's', c: 1, o: ['Yok', 'Var'] },
     { k: 'enf', l: 'Aktif sistemik enfeksiyon', t: 's', o: ['Yok', 'Var'] },
@@ -783,11 +783,27 @@
     if (yon !== 'devam' && t !== 'E' && Math.abs(r - nd) / nd > 0.15) neden += '; hesaplanan ≈ ' + tr(Math.round(nd)) + ' ' + ESAU[t] + ', en yakın kalem ' + tr(r) + ' ' + ESAU[t] + ' (gerekirse doz aralığı değiştirilebilir)';
     return Object.assign(R, { yon: yon, oneri: yon === 'devam' ? ds(t, d) : ds(t, r), neden: neden + (yon === 'devam' && !hr ? '; doz değişikliği gerekmiyor' : '') + '.' + cap, fark: fark, set: yon === 'devam' ? null : { esaDoz: r } });
   }
+  /* IV demir etken madde ve doz seçenekleri: [aylık toplam mg, uygulama şekli] */
+  var DEMIR_OPS = {
+    'IV demir sükroz': [[400, '100 mg/hafta (400 mg/ay)'], [400, '200 mg 2 haftada bir (400 mg/ay)'], [200, '100 mg 2 haftada bir (200 mg/ay)'], [200, '200 mg/ay']],
+    'IV ferrik karboksimaltoz': [[500, '500 mg tek doz'], [750, '750 mg tek doz'], [1000, '1000 mg tek doz']],
+    'IV ferrik derisomaltoz': [[500, '500 mg tek doz'], [1000, '1000 mg tek doz']],
+    'IV sodyum ferrik glukonat': [[250, '62,5 mg/hafta (250 mg/ay)'], [500, '125 mg/hafta (500 mg/ay)']],
+    'IV demir dekstran (düşük molekül ağırlıklı)': [[500, '500 mg tek doz'], [1000, '1000 mg tek doz']]
+  };
+  function demirSecim(x) {
+    var t = x.p.demirTercih, pd = x.p.mod === 'PD';
+    if (t && DEMIR_OPS[t.ad] && DEMIR_OPS[t.ad][t.i]) return t;
+    var cur = x.v.demir, dz = x.n('demirDoz');
+    if (DEMIR_OPS[cur]) { var L = DEMIR_OPS[cur], j = 0; L.forEach(function (o, k) { if (dz != null && o[0] === dz && L[j][0] !== dz) j = k; }); return { ad: cur, i: j }; }
+    return pd ? { ad: 'IV ferrik karboksimaltoz', i: 0 } : { ad: 'IV demir sükroz', i: 0 };
+  }
   function planDemir(x) {
     var fer = x.n('ferritin'), ts = x.n('tsat'), h = x.n('hb'), on = var_(x, 'demir'), dz = x.n('demirDoz'), pd = x.p.mod === 'PD', R = { k: 'demir', l: 'IV demir', src: KP + 'KDIGO Anemi 2026, 2.1–2.4' };
     R.simdi = on ? (x.v.demir + (dz ? ' ' + tr(dz) + ' mg/ay' : '')) : 'Yok';
-    var std = on && dz ? x.v.demir + ' ' + tr(dz) + ' mg/ay' : pd ? 'IV ferrik karboksimaltoz 1 doz (ör. 500 mg)' : 'IV demir sükroz 100 mg/hafta (400 mg/ay)';
-    var stdSet = on && dz ? null : pd ? { demir: 'IV ferrik karboksimaltoz', demirDoz: 500 } : { demir: 'IV demir sükroz', demirDoz: 400 };
+    var sc = demirSecim(x), op = DEMIR_OPS[sc.ad][sc.i]; R.secim = sc;
+    var std = sc.ad + ' ' + op[1], ayni = on && x.v.demir === sc.ad && dz === op[0];
+    var stdSet = ayni ? null : { demir: sc.ad, demirDoz: op[0] };
     if (var_(x, 'enf')) return Object.assign(R, { yon: on ? 'ara' : 'yok', oneri: on ? 'Ara ver' : 'Verilmez', neden: 'Aktif sistemik enfeksiyon süresince IV demir verilmez.', set: on ? { demirDoz: 0 } : null });
     if (fer == null) return Object.assign(R, { yon: 'izle', oneri: 'Ferritin gerekli', neden: 'Bu ay ferritin girilmedi (Excel ferritini aylık ister).' });
     if (fer > 700 || (ts != null && ts >= 40)) return Object.assign(R, { yon: on ? 'ara' : 'yok', oneri: on ? 'Ara ver' : 'Verilmez', neden: 'Ferritin ' + tr(fer) + (ts != null ? ', TSAT %' + tr(ts) : '') + '; ferritin > 700 ng/mL veya TSAT ≥ %40.', set: on ? { demirDoz: 0 } : null });
@@ -796,7 +812,7 @@
     if (kd != null && exG && !ver) fark = 'Excel yalnız ferritine bakar ve demir verir; ' + (pd ? 'KDIGO Anemi 2026 PD eşikleri (ferritin < 100 ve TSAT < %40 veya ferritin 100–299 ve TSAT < %25)' : 'TSAT > %30 veya ferritin > 500') + ' nedeniyle verilmez.';
     else if (kd != null && !exG && ver) fark = 'Excel ferritin ≥ 400 ng/mL’de demir vermez; ' + (pd ? 'KDIGO PD eşikleri' : 'KDIGO Anemi 2026 (ferritin ≤ 500, TSAT ≤ %30)') + ' karşılandığı için verilir.';
     var neden = 'Ferritin ' + tr(fer) + ' ng/mL' + (ts != null ? ', TSAT %' + tr(ts) : ', TSAT girilmedi') + (h != null ? ', Hb ' + tr(h, 1) : '');
-    if (ver) return Object.assign(R, { yon: on ? 'devam' : 'basla', oneri: std, neden: neden + '.' + (ts == null ? ' Karar için TSAT da istenmeli.' : ''), fark: fark, set: on ? null : stdSet });
+    if (ver) return Object.assign(R, { yon: !on ? 'basla' : ayni ? 'devam' : 'degis', oneri: std, neden: neden + '.' + (ts == null ? ' Karar için TSAT da istenmeli.' : ''), fark: fark, set: stdSet });
     return Object.assign(R, { yon: on ? 'ara' : 'yok', oneri: on ? 'Ara ver' : 'Gerekmiyor', neden: neden + (h != null && h >= 12 ? '; Hb ≥ 12 g/dL' : '') + '.', fark: fark, set: on ? { demirDoz: 0 } : null });
   }
   function tb(n) { return n === 2 ? '2×1 tablet/gün' : n === 3 ? '3×1 tablet/gün' : n === 6 ? '3×2 tablet/gün' : n === 1 ? '1×1 tablet/gün' : n + ' tablet/gün'; }
@@ -845,8 +861,8 @@
       }
     } else {
       var g = dur ? 0 : pth >= 250 * s && pth <= 300 * s && P < 6 && ca <= 8.5 ? 0.25 : pth > 300 * s && pth <= 400 * s && P <= 6 && ca <= 9 ? 0.25 : pth > 400 * s && pth <= 450 * s && P <= 6.1 && ca <= 9.8 ? 0.5 : pth > 450 * s && pth <= 550 * s && P <= 6.2 && ca <= 10 ? 0.5 : pth > 550 * s && P <= 6.5 && ca <= 10.2 ? 1 : 0;
-      hedef = r2(g * 7); ad = on ? t : 'Kalsitriol'; yaz = 'Oral ' + (on ? t.toLocaleLowerCase('tr') : 'aktif D vitamini (ör. QALYVIZ)') + ' ' + (g === 1 ? '0,5 µg × 2/gün' : tr(g, 2) + ' µg/gün');
-      fark = 'Excel dozu “mg” olarak yazar (0,25 mg, 0,5 mg); doğru birim µg’dır.';
+      hedef = r2(g * 7); ad = on ? t : 'Kalsitriol'; yaz = 'Oral ' + (on ? t.toLocaleLowerCase('tr') : 'kalsitriol (QALYVIZ)') + ' ' + (g === 1 ? '0,5 µg × 2/gün' : tr(g, 2) + ' µg/gün');
+      fark = 'Excel QALYVIZ (kalsitriol) dozunu “mg” olarak yazar (0,25 mg, 0,5 mg); doğru birim µg’dır.';
     }
     if (P != null && P > 5.5 && hedef > 0 && (!dw || hedef > dw)) { hedef = on ? dw : 0; fark = (fark ? fark + ' ' : '') + 'Excel P 6,0–6,5 mg/dL’ye kadar aktif D vitamini başlatır veya artırır; hiperfosfatemide (P > 5,5) başlanmaz ve artırılmaz, mevcut doz korunur.'; }
     if (on && dw == null && !hedef && !dur && pth <= 9 * U) return Object.assign(R, { yon: 'devam', oneri: R.simdi, neden: nd + '; mevcut doz girilmemiş.' });
@@ -900,7 +916,7 @@
   }
   var PLAN_DOC = [
     ['ESA', 'Bu ayın Hb’si ve önceki aya göre değişimine göre çarpan: Hb ≤ 10 ve artış < 1 g/dL → +%25; Hb 10–11 ve artış < 0,5 → +%25; artış 1–2 → %15–30 azalt; artış ≥ 2 → %35–40 azalt; Hb 11,5–12 → en az %25 azalt; Hb 12–13 → %50 azalt; Hb ≥ 13 → ara ver. ESA hiporesponsivitesinde artırılmaz. Yuvarlama: darbepoetin kalemleri, epoetin 1000 IU, CERA kalemleri. Üst sınır 150 IU/kg/hafta (darbepoetinde Excel dönüşüm tablosu). Başlangıç: Hb < 10 ve ferritin ≥ 100 ise darbepoetin 0,45 µg/kg/hafta; ara verilmişse son dozun %75’i.', 'Excel Hb ≤ 10’da %50 artırır, Hb ≥ 12’de keser, Hb 10–11’de 65 IU/kg ile başlar, ferritin < 100’de idame ESA’yı da keser.', 'KDIGO Anemi 2026; darbepoetin ürün bilgisi; yazarların ESA kuralı'],
-    ['IV demir', 'Ferritin > 700 ng/mL, TSAT ≥ %40 veya aktif enfeksiyonda ara verilir. TSAT varsa HD: ferritin ≤ 500 ve TSAT ≤ %30; PD: ferritin < 100 ve TSAT < %40 veya ferritin 100–299 ve TSAT < %25. TSAT yoksa Excel kuralı: ferritin < 100 veya ferritin < 400 ve Hb < 12.', 'Excel yalnız ferritine bakar.', 'KDIGO Anemi 2026, 2.1–2.4'],
+    ['IV demir', 'Etken madde ve doz hasta için seçilir (demir sükroz, ferrik karboksimaltoz, ferrik derisomaltoz, sodyum ferrik glukonat, düşük molekül ağırlıklı demir dekstran); seçim yoksa HD’de demir sükroz 100 mg/hafta, PD’de ferrik karboksimaltoz 500 mg. Ferritin > 700 ng/mL, TSAT ≥ %40 veya aktif enfeksiyonda ara verilir. TSAT varsa HD: ferritin ≤ 500 ve TSAT ≤ %30; PD: ferritin < 100 ve TSAT < %40 veya ferritin 100–299 ve TSAT < %25. TSAT yoksa Excel kuralı: ferritin < 100 veya ferritin < 400 ve Hb < 12.', 'Excel yalnız ferritine bakar.', 'KDIGO Anemi 2026, 2.1–2.4'],
     ['Kalsiyum içeren bağlayıcı', 'Düzeltilmiş Ca > 10,2 → kes. P 4,5–5,5 ve Ca < 9,5 → kullanıyorsa 2×1. P 5,5–7,5, iPTH ≥ 250 × (üst sınır/65) ve Ca ≤ 10,2 → 3×1. P < 3,5 → azalt veya kes; P 3,5–4,5 → sürdür. iPTH düşük veya P > 7,5 → kalsiyum içermeyen bağlayıcı.', 'Excel P 6–7,5’te 3×2 önerir ve P ≤ 4,5’te keser.', 'KDIGO KBH-MKB 2017, 4.1.5–4.1.6'],
     ['Sevelamer', 'P ≥ 4,5 ve (iPTH < 2 × üst sınır veya Ca ≥ 9,5 veya kalsiyumlu bağlayıcı kesildi) → 2×1; P ≥ 5,5 ve (aynı koşullar veya iPTH ≥ 300 × ölçek veya P > 6) → 3×1; ardışık iki ayda P > 5,5 ve 3×1 alıyorsa 3×2. P < 3,5 → azalt veya kes.', 'Excel P × Ca çarpımı ve Kt/V ≥ 1,4 koşulunu kullanır.', 'KDIGO KBH-MKB 2017, 4.1.5–4.1.6'],
     ['Aktif D vitamini', 'HD: iPTH bandına göre IV kalsitriol 1 µg × 1 → 2 µg × 3/hafta; iPTH > 600 × ölçek, P < 5,5 ve Ca < 10,2 ise IV parikalsitol 5 µg × 3 → 10 µg × 3/hafta. PD: oral 0,25 → 0,5 µg × 2/gün. Ca > 10,2, P > 6,5 veya iPTH < 2 × üst sınırda kesilir; P > 5,5’te başlanmaz ve artırılmaz. iPTH hedef aralıkta, Ca ≤ 10,2 ve P ≤ 5,5 ise mevcut doz korunur. Eşikler iPTH üst sınırına göre ölçeklenir.', 'Excel PD dozlarını “mg” yazar (doğrusu µg) ve P 6,5’e kadar başlatır.', 'KDIGO KBH-MKB 2017, 4.2.2–4.2.4'],
@@ -984,6 +1000,6 @@
       ['Toplam sıvı çıkışı ≥ 1000 mL/gün', function (c) { return c.cikis == null ? null : c.cikis >= 1000; }], ['Serum K 3,5–5,5', function (c, n) { return n('k') == null ? null : n('k') >= 3.5 && n('k') <= 5.5; }], ['Hipertonik (%3,86) kullanılmıyor', function (c) { return !c.L || c.L['386'] == null ? (c.recete ? true : null) : c.L['386'] === 0; }],
       ['Serum HCO₃ ≥ 22', function (c, n) { return n('hco3') == null ? null : n('hco3') >= 22; }], ['İdrar ≥ 100 mL/gün (rezidüel fonksiyon)', function (c, n) { return n('idrar') == null ? null : n('idrar') >= 100; }]].concat(KPI_ORT)
   };
-  root.DR = { PLAN_DOC: PLAN_DOC, ilacPlan: function (p, ay) { return evaluate(p, ay).plan; }, takvim: takvim, SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
+  root.DR = { DEMIR_OPS: DEMIR_OPS, PLAN_DOC: PLAN_DOC, ilacPlan: function (p, ay) { return evaluate(p, ay).plan; }, takvim: takvim, SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
     f: { watson: watson, bsa: bsa, spKtV: spKtV, eKtV: eKtV, stdKtV: stdKtV } };
 })(typeof window !== 'undefined' ? window : globalThis);

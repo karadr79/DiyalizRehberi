@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8.1', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8.2', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -92,11 +92,15 @@
   /* ---------------- İlaç planı ---------------- */
   const YON = { basla: ['info', 'Başla'], artir: ['warn', 'Artır'], azalt: ['warn', 'Azalt'], degis: ['warn', 'Değiştir'], devam: ['ok', 'Devam'], kes: ['bad', 'Kes'], ara: ['bad', 'Ara ver'], izle: ['info', 'İzle'], uyari: ['warn', 'Dikkat'] };
   const rxAd = k => k === 'e' ? 'Onaylandı' : k === 'h' ? 'Uygulanmadı' : '';
+  function demirSecHTML(sc) {
+    const O = D.DEMIR_OPS;
+    return `<div class="rx-sec noprint"><label>Etken madde<select data-dt="ad">${Object.keys(O).map(k => `<option ${k === sc.ad ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></label><label>Doz<select data-dt="i">${O[sc.ad].map((o, i) => `<option value="${i}" ${i === sc.i ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label></div>`;
+  }
   function rxHTML(r, v, canDecide) {
     const k = (v.rx || {})[r.k], y = YON[r.yon] || YON.izle;
     return `<div class="rx ${r.yon}"><div class="rx-h"><b>${esc(r.l)}</b><span class="pill ${y[0]}">${y[1]}</span></div>
       <div class="rx-d"><div><small>Şu an</small><span>${esc(r.simdi || '—')}</span></div><i aria-hidden="true">→</i><div><small>Öneri</small><strong>${esc(r.oneri)}</strong></div></div>
-      <p>${esc(r.neden)}</p>${r.fark ? `<p class="rx-f"><b>Excel protokolünden farkı:</b> ${esc(r.fark)}</p>` : ''}
+      ${r.secim ? demirSecHTML(r.secim) : ''}<p>${esc(r.neden)}</p>${r.fark ? `<p class="rx-f"><b>Excel protokolünden farkı:</b> ${esc(r.fark)}</p>` : ''}
       <div class="ft"><span class="src">${esc(r.src || '')}</span>${canDecide && r.set ? `<span class="kar noprint" role="group" aria-label="Hekim kararı"><button type="button" data-act="rx" data-id="${r.k}" data-val="e" aria-pressed="${k === 'e'}">Onayla</button><button type="button" data-act="rx" data-id="${r.k}" data-val="h" aria-pressed="${k === 'h'}">Uygulanmadı</button></span>` : ''}</div></div>`;
   }
   function recHTML(r, v, canDecide) {
@@ -432,6 +436,8 @@
     const t = e.target;
     if (t.dataset.k) { const p = cur.p, v = p && p.visits[cur.ay]; if (!v) return; const val = t.dataset.k === 'plan' ? t.value : t.value.trim(); if (val === '') delete v[t.dataset.k]; else v[t.dataset.k] = val; if (!p.temp) save(); refresh(); }
     else if (t.dataset.pk) { const p = cur.p; if (!p) return; const val = t.value.trim(); if (val === '') delete p[t.dataset.pk]; else p[t.dataset.pk] = val; refresh(); }
+    else if (t.dataset.dt) { const p = cur.p; if (!p) return; const o = p.demirTercih || {}, cur0 = D.ilacPlan(p, cur.ay).find(r => r.k === 'demir'), sc = (cur0 && cur0.secim) || {};
+      p.demirTercih = t.dataset.dt === 'ad' ? { ad: t.value, i: 0 } : { ad: o.ad || sc.ad, i: parseInt(t.value, 10) || 0 }; if (!p.temp) save(); refresh(); }
     else if (t.id === 'yq') { $('#ylist').innerHTML = yonList(t.value.trim()); }
   }
   document.addEventListener('input', onInput); document.addEventListener('change', onInput);
