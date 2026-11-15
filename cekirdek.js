@@ -111,7 +111,9 @@
     { k: 'd25', l: '25(OH) D vitamini', u: 'ng/mL', t: 'n', mn: 1, mx: 200 },
     { k: 'caBag', l: 'Kalsiyum içeren bağlayıcı', t: 's', c: 1, o: ['Yok', 'Kalsiyum asetat', 'Kalsiyum karbonat'] },
     { k: 'caBagEl', l: 'Bağlayıcıdan elemental Ca', u: 'mg/gün', t: 'n', c: 1, mn: 0, mx: 4000 },
+    { k: 'caBagTb', l: 'Kalsiyum içeren bağlayıcı', u: 'tablet/gün', t: 'n', c: 1, mn: 0, mx: 12 },
     { k: 'nonCa', l: 'Kalsiyum içermeyen bağlayıcı', t: 's', c: 1, o: ['Yok', 'Sevelamer', 'Lantan karbonat', 'Sukroferrik oksihidroksit', 'Ferrik sitrat'] },
+    { k: 'nonCaTb', l: 'Kalsiyum içermeyen bağlayıcı', u: 'tablet/gün', t: 'n', c: 1, mn: 0, mx: 15 },
     { k: 'vitD', l: 'Kalsitriol / D vitamini analoğu', t: 's', c: 1, o: ['Yok', 'Kalsitriol', 'Parikalsitol', 'Alfakalsidol'] },
     { k: 'vitDDoz', l: 'Aktif D vitamini dozu', u: 'µg/hafta', t: 'n', c: 1, mn: 0, mx: 100 },
     { k: 'kalsim', l: 'Kalsimimetik', t: 's', c: 1, o: ['Yok', 'Sinakalset', 'Etelkalsetid'] },
@@ -726,6 +728,191 @@
 
   function sortedMonths(p) { return Object.keys(p.visits || {}).sort(); }
   function prevMonth(p, ay) { var m = sortedMonths(p).filter(function (a) { return a < ay; }); return m.length ? m[m.length - 1] : null; }
+  /* ---------------- İlaç planı: aylık doz motoru ----------------
+     Temel: ünitenin aylık takip Excel'i (HD ve PD). Düzeltme: KDIGO Anemi 2026, KDIGO KBH-MKB 2017,
+     ürün bilgileri ve uygulama yazarlarının ESA kuralı. Her satır Excel'den farkını "fark" alanında taşır. */
+  var DARBE = [10, 15, 20, 30, 40, 50, 60, 80, 100, 130, 150, 300], CERAL = [30, 50, 75, 100, 120, 150, 200, 250, 360], SINA = [30, 60, 90, 120, 180], ETEL = [2.5, 5, 7.5, 10, 12.5, 15];
+  function yakin(list, d) { var b = list[0]; list.forEach(function (s) { if (Math.abs(s - d) < Math.abs(b - d)) b = s; }); return b; }
+  function basamak(list, cur, adim) { var i = 0; list.forEach(function (s, j) { if (s <= cur + 1e-9) i = j; }); if (cur < list[0]) i = adim > 0 ? -1 : 0; return list[Math.max(0, Math.min(list.length - 1, i + adim))]; }
+  function esaYuvarla(t, d, nd) {
+    if (t === 'E') { var r = Math.max(1000, Math.round(nd / 1000) * 1000); if (nd > d && r <= d) r = d + 1000; if (nd < d && r >= d) r = Math.max(1000, d - 1000); return r; }
+    var L = t === 'D' ? DARBE : CERAL, q = yakin(L, nd);
+    if (nd > d && q <= d) q = basamak(L, d, 1); if (nd < d && q >= d) q = basamak(L, d, -1); return q;
+  }
+  var ESAU = { E: 'IU/hafta', D: 'µg/hafta', C: 'µg/ay' }, ESAN = { E: 'Epoetin', D: 'Darbepoetin', C: 'CERA' }, ESAF = { E: 'Epoetin alfa/beta', D: 'Darbepoetin alfa', C: 'Metoksi-PEG epoetin beta (CERA)' };
+  var KP = 'Ünite takip protokolü (Excel); ';
+  /* Excel'in haftalık epoetin (IU) → darbepoetin (µg/hafta) basamakları; Hb < 10,6'da bir üst basamak */
+  function exBand(iu, h) { var B = [[2000, 10, 10], [3000, 20, 10], [4000, 20, 20], [5000, 30, 20], [6000, 30, 30], [8000, 40, 30], [9000, 50, 40], [10000, 50, 40], [12000, 60, 50], [14000, 70, 60], [16000, 80, 70], [18000, 90, 80], [20000, 100, 90], [22000, 110, 100], [24000, 120, 110], [26000, 130, 120]], lo = h != null && h < 10.6;
+    for (var i = 0; i < B.length; i++) if (iu <= B[i][0]) return lo ? B[i][1] : B[i][2]; return 130; }
+  function planEsa(x, W) {
+    var h = x.n('hb'), dh = dHb(x), fer = x.n('ferritin'), on = var_(x, 'esa'), t = esaAd(x), d = x.n('esaDoz'), R = { k: 'esa', l: 'ESA', src: KP + 'KDIGO Anemi 2026' };
+    var ds = function (tt, q) { return ESAN[tt] + ' ' + tr(q) + ' ' + ESAU[tt]; };
+    R.simdi = on && d ? ds(t, d) : on ? ESAN[t] + ' (doz girilmemiş)' : 'Yok';
+    if (h == null) return Object.assign(R, { yon: 'izle', oneri: 'Hb girilmedi', neden: 'Doz kararı için bu ayın Hb değeri gerekir.' });
+    if (var_(x, 'hifphi') && on) return Object.assign(R, { yon: 'uyari', oneri: 'ESA veya HIF-PHI', neden: 'İkisi birlikte kullanılmaz; birinin kesilmesi gerekir.' });
+    if (!on || !d) {
+      var son = null; if (on) sortedMonths(x.p).forEach(function (a) { if (a < x.ay) { var q = x.p.visits[a]; if (q.esa === x.v.esa && num(q.esaDoz) > 0) son = num(q.esaDoz); } });
+      if (on && son && h < 11.5) { var r0 = esaYuvarla(t, son, son * 0.75); return Object.assign(R, { yon: 'basla', oneri: ds(t, r0), neden: 'Ara verilmiş ESA, Hb ' + tr(h, 1) + ' g/dL; son dozun yaklaşık %25 altında yeniden başlanır.', fark: 'Excel bu durumda kilo başına başlangıç dozunu (65 veya 130 IU/kg/hafta) yeniden uygular.', set: { esaDoz: r0 } }); }
+      if (h < 10 && fer != null && fer < 100) return Object.assign(R, { yon: 'izle', oneri: 'Önce demir', neden: 'Hb ' + tr(h, 1) + ' g/dL ancak ferritin ' + tr(fer) + ' ng/mL; ESA başlamadan önce demir eksikliği düzeltilir (SUT ESA raporu ferritin ≥ 100 ister).' });
+      if (h < 10) { var st = W ? yakin(DARBE, 0.45 * W) : 20; return Object.assign(R, { yon: 'basla', oneri: ds('D', st), neden: 'Hb ' + tr(h, 1) + ' g/dL (< 10); darbepoetin 0,45 µg/kg/hafta' + (W ? ' × ' + tr(W, 1) + ' kg' : ' (kilo yok, 20 µg varsayıldı)') + '.', fark: 'Excel epoetin 130 IU/kg/hafta ile başlar (≈ 0,65 µg/kg darbepoetin); ürün bilgisindeki başlangıç dozu 0,45 µg/kg/haftadır.', set: { esa: ESAF.D, esaDoz: st } }); }
+      if (h < 11) return Object.assign(R, { yon: 'izle', oneri: 'Başlanmaz', neden: 'Hb ' + tr(h, 1) + ' g/dL; diyaliz hastasında ESA Hb 9–10 g/dL altına inince başlanır.', fark: 'Excel Hb 10–11 g/dL arasında 65 IU/kg/hafta ile başlar.' });
+      return Object.assign(R, { yon: 'yok', oneri: 'Gerekmiyor', neden: 'Hb ' + tr(h, 1) + ' g/dL.' });
+    }
+    var ex, f, fark = '', neden;
+    if (h <= 9) ex = dh == null ? 1 : dh < 2 ? 1.5 : 1; else if (h <= 10) ex = dh == null ? 1 : dh < 1 ? 1.5 : dh < 2 ? 1 : 0.8;
+    else if (h < 11) ex = dh == null ? 1 : dh < 0.5 ? 1.25 : dh < 1 ? 1 : dh < 2 ? 0.8 : 0.65; else if (h < 12) ex = dh == null ? 1 : dh < 0.55 ? 1 : dh < 1 ? 0.85 : dh < 2 ? 0.7 : 0.6; else ex = 0;
+    f = ex; neden = 'Hb ' + tr(h, 1) + ' g/dL' + (dh != null ? ', aylık değişim ' + (dh > 0 ? '+' : '') + tr(dh, 1) : ', önceki ay Hb yok');
+    if (h >= 13) { f = 0; fark = 'Excel Hb ≥ 12 g/dL’de ESA’yı keser.'; }
+    else if (h >= 12) { f = 0.5; fark = 'Excel Hb ≥ 12 g/dL’de ESA’yı keser; KDIGO hızlı Hb düşüşünü önlemek için kesmek yerine azaltmayı önerir.'; }
+    else if (h >= 11.5) { if (f > 0.75) { f = 0.75; fark = 'Excel Hb 11,5–12 g/dL’de dozu ' + (ex === 1 ? 'aynı bırakır' : '%' + Math.round((1 - ex) * 100) + ' azaltır') + '; hedef 11,5 g/dL’yi aşmamak için en az %25 azaltılır.'; } }
+    else if (ex === 1.5) { f = 1.25; fark = 'Excel dozu %50 artırır; KDIGO artışları %25 basamaklarla önerir.'; }
+    if (dh == null && h >= 11.5 && f >= 1) f = 0.75;
+    var hr = f > 1 && hipoRes(x);
+    if (hr) { f = 1; fark = 'Excel dozu ' + (ex === 1.5 ? '%50' : '%25') + ' artırır; ESA hiporesponsivitesinde doz artırılmaz.'; neden += '; ESA hiporesponsivitesi (' + hr + ')'; }
+    if (f === 0) return Object.assign(R, { yon: 'ara', oneri: 'Ara ver', neden: neden + '; Hb hedefin belirgin üzerinde.', fark: fark, set: { esaDoz: 0 } });
+    var nd = d * f, cap = '', iuKg = function (q) { return t === 'E' ? q / W : t === 'D' ? q * 200 / W : null; };
+    var r = f === 1 ? d : esaYuvarla(t, d, nd);
+    if (W && f > 1 && t === 'E' && r > 150 * W) { r = Math.max(d, Math.floor(150 * W / 1000) * 1000); cap = ' Üst sınır 150 IU/kg/hafta (Excel) uygulandı.'; }
+    if (W && f > 1 && t === 'D') { var mx = exBand(150 * W, h); if (r > mx) { r = Math.max(d, mx); cap = ' Üst sınır: 150 IU/kg/hafta karşılığı ' + tr(mx) + ' µg/hafta (Excel dönüşüm tablosu).'; } }
+    if (f < 1 && r >= d && t === 'D' && d <= 10) return Object.assign(R, { yon: 'azalt', oneri: 'Darbepoetin 10 µg iki haftada bir (5 µg/hafta)', neden: neden + '; en düşük kalemde azaltma doz aralığı uzatılarak yapılır.', fark: fark, set: { esaDoz: 5 } });
+    if (f < 1 && r >= d && t === 'E' && d <= 1000) return Object.assign(R, { yon: 'ara', oneri: 'Ara ver', neden: neden + '; en düşük dozda.', fark: fark, set: { esaDoz: 0 } });
+    var yon = r > d ? 'artir' : r < d ? 'azalt' : 'devam';
+    if (yon === 'artir') { var ts = x.n('tsat'); if ((fer != null && fer < 100) || (ts != null && ts < 20)) neden += '; artıştan önce demir eksikliği düzeltilmeli'; }
+    if (yon === 'artir' && h > 10) neden += dh != null && dh < 0 ? '; Hb düşüş eğiliminde' : '; aylık artış < 0,5 g/dL';
+    if (yon !== 'devam' && t !== 'E' && Math.abs(r - nd) / nd > 0.15) neden += '; hesaplanan ≈ ' + tr(Math.round(nd)) + ' ' + ESAU[t] + ', en yakın kalem ' + tr(r) + ' ' + ESAU[t] + ' (gerekirse doz aralığı değiştirilebilir)';
+    return Object.assign(R, { yon: yon, oneri: yon === 'devam' ? ds(t, d) : ds(t, r), neden: neden + (yon === 'devam' && !hr ? '; doz değişikliği gerekmiyor' : '') + '.' + cap, fark: fark, set: yon === 'devam' ? null : { esaDoz: r } });
+  }
+  function planDemir(x) {
+    var fer = x.n('ferritin'), ts = x.n('tsat'), h = x.n('hb'), on = var_(x, 'demir'), dz = x.n('demirDoz'), pd = x.p.mod === 'PD', R = { k: 'demir', l: 'IV demir', src: KP + 'KDIGO Anemi 2026, 2.1–2.4' };
+    R.simdi = on ? (x.v.demir + (dz ? ' ' + tr(dz) + ' mg/ay' : '')) : 'Yok';
+    var std = on && dz ? x.v.demir + ' ' + tr(dz) + ' mg/ay' : pd ? 'IV ferrik karboksimaltoz 1 doz (ör. 500 mg)' : 'IV demir sükroz 100 mg/hafta (400 mg/ay)';
+    var stdSet = on && dz ? null : pd ? { demir: 'IV ferrik karboksimaltoz', demirDoz: 500 } : { demir: 'IV demir sükroz', demirDoz: 400 };
+    if (var_(x, 'enf')) return Object.assign(R, { yon: on ? 'ara' : 'yok', oneri: on ? 'Ara ver' : 'Verilmez', neden: 'Aktif sistemik enfeksiyon süresince IV demir verilmez.', set: on ? { demirDoz: 0 } : null });
+    if (fer == null) return Object.assign(R, { yon: 'izle', oneri: 'Ferritin gerekli', neden: 'Bu ay ferritin girilmedi (Excel ferritini aylık ister).' });
+    if (fer > 700 || (ts != null && ts >= 40)) return Object.assign(R, { yon: on ? 'ara' : 'yok', oneri: on ? 'Ara ver' : 'Verilmez', neden: 'Ferritin ' + tr(fer) + (ts != null ? ', TSAT %' + tr(ts) : '') + '; ferritin > 700 ng/mL veya TSAT ≥ %40.', set: on ? { demirDoz: 0 } : null });
+    var exG = fer < 100 || (fer < 400 && (h == null || h < 12)), kd = ts == null ? null : pd ? (fer < 100 && ts < 40) || (fer < 300 && ts < 25) : fer <= 500 && ts <= 30;
+    var ver = kd == null ? exG : kd && (h == null || h < 12 || fer < 100), fark = '';
+    if (kd != null && exG && !ver) fark = 'Excel yalnız ferritine bakar ve demir verir; ' + (pd ? 'KDIGO Anemi 2026 PD eşikleri (ferritin < 100 ve TSAT < %40 veya ferritin 100–299 ve TSAT < %25)' : 'TSAT > %30 veya ferritin > 500') + ' nedeniyle verilmez.';
+    else if (kd != null && !exG && ver) fark = 'Excel ferritin ≥ 400 ng/mL’de demir vermez; ' + (pd ? 'KDIGO PD eşikleri' : 'KDIGO Anemi 2026 (ferritin ≤ 500, TSAT ≤ %30)') + ' karşılandığı için verilir.';
+    var neden = 'Ferritin ' + tr(fer) + ' ng/mL' + (ts != null ? ', TSAT %' + tr(ts) : ', TSAT girilmedi') + (h != null ? ', Hb ' + tr(h, 1) : '');
+    if (ver) return Object.assign(R, { yon: on ? 'devam' : 'basla', oneri: std, neden: neden + '.' + (ts == null ? ' Karar için TSAT da istenmeli.' : ''), fark: fark, set: on ? null : stdSet });
+    return Object.assign(R, { yon: on ? 'ara' : 'yok', oneri: on ? 'Ara ver' : 'Gerekmiyor', neden: neden + (h != null && h >= 12 ? '; Hb ≥ 12 g/dL' : '') + '.', fark: fark, set: on ? { demirDoz: 0 } : null });
+  }
+  function tb(n) { return n === 2 ? '2×1 tablet/gün' : n === 3 ? '3×1 tablet/gün' : n === 6 ? '3×2 tablet/gün' : n === 1 ? '1×1 tablet/gün' : n + ' tablet/gün'; }
+  function planBag(x) {
+    var P = x.n('p'), ca = x.c.dca, pth = x.n('pth'), U = x.n('pthUst') || 65, s = U / 65, caOn = var_(x, 'caBag'), caT = x.n('caBagTb'), sev = x.v.nonCa === 'Sevelamer', nonOn = var_(x, 'nonCa'), sT = x.n('nonCaTb'), pP = x.pv ? val(x.p.mod, x.pv, 'p') : null, out = [], src = KP + 'KDIGO KBH-MKB 2017, 4.1.5–4.1.6';
+    var rc = { k: 'caBag', l: 'Kalsiyum içeren bağlayıcı', src: src, simdi: caOn ? x.v.caBag + (caT ? ', ' + tb(caT) : '') : 'Yok' }, rs = { k: 'nonCa', l: 'Kalsiyum içermeyen bağlayıcı', src: src, simdi: nonOn ? x.v.nonCa + (sT ? ', ' + tb(sT) : '') : 'Yok' };
+    if (P == null) { if (caOn) out.push(Object.assign(rc, { yon: 'izle', oneri: 'Fosfor gerekli', neden: 'Bu ay fosfor girilmedi.' })); if (nonOn) out.push(Object.assign(rs, { yon: 'izle', oneri: 'Fosfor gerekli', neden: 'Bu ay fosfor girilmedi.' })); return out; }
+    var nd = 'P ' + tr(P, 1) + (ca != null ? ', düzeltilmiş Ca ' + tr(ca, 1) : '') + (pth != null ? ', iPTH ' + tr(pth) : ''), c, cf = '', sv, sf = '', lowP = pth != null && pth < 2 * U;
+    /* kalsiyum içeren */
+    if (ca != null && ca > 10.2) c = 0; else if (P < 3.5) c = caOn ? (caT && caT > 2 ? 2 : 0) : null;
+    else if (P <= 4.5) { c = caOn ? (caT || null) : null; if (caOn) cf = 'Excel P ≤ 4,5 mg/dL’de bağlayıcıyı keser; kontrol altındaki fosforda kesmek geri tepmeye yol açacağından sürdürülür.'; }
+    else if (P <= 5.5) c = ca != null && ca >= 9.5 ? 0 : caOn ? 2 : null;
+    else if (P <= 7.5 && pth != null && pth >= 250 * s) c = P <= 6 ? 3 : 6; else c = caOn ? 0 : null;
+    if (c === 6) { c = 3; cf = 'Excel P 6–7,5 mg/dL’de 3×2 tablet önerir; KDIGO 2017 kalsiyum içeren bağlayıcı dozunun kısıtlanmasını önerdiği için 3×1’de tutulur, ek fosfor kontrolü kalsiyum içermeyen bağlayıcıyla sağlanır.'; }
+    if (c != null || caOn) { var cy = c == null ? 'devam' : !caOn ? (c > 0 ? 'basla' : 'yok') : c === 0 ? 'kes' : caT == null ? 'degis' : c > caT ? 'artir' : c < caT ? 'azalt' : 'devam';
+      var cn = ca != null && ca > 10.2 ? '; hiperkalsemi' : P <= 4.5 ? '; fosfor hedefte' : c === 0 && P > 7.5 ? '; P > 7,5 mg/dL, kalsiyum içermeyen bağlayıcı tercih edilir' : c === 0 && pth != null && pth < 250 * s ? '; iPTH düşük (adinamik kemik riski)' : c === 0 && ca != null && ca >= 9.5 ? '; Ca yüksek-normal' : '';
+      if (cy !== 'yok') out.push(Object.assign(rc, { yon: cy, oneri: cy === 'kes' ? 'Kes' : (caOn ? x.v.caBag : 'Kalsiyum asetat') + ', ' + tb(c == null ? caT : c), neden: nd + cn + (cy === 'degis' ? '; mevcut tablet sayısı girilmemiş' : '') + '.', fark: cf, set: cy === 'devam' ? null : c === 0 ? { caBag: 'Yok', caBagTb: 0 } : Object.assign(caOn ? {} : { caBag: 'Kalsiyum asetat' }, { caBagTb: c }) })); }
+    /* sevelamer (Excel); diğer kalsiyum içermeyen bağlayıcılar korunur */
+    var caYok = c === 0 && P > 4.5;
+    if (P < 3.5) sv = nonOn ? (sT && sT > 2 ? 2 : 0) : null; else if (P < 4.5) { sv = nonOn ? (sT || null) : null; if (nonOn) sf = 'Excel P < 4,5 mg/dL’de bağlayıcıyı keser; kontrol altındaki fosforda sürdürülür.'; }
+    else if (P < 5.5) { sv = lowP || (ca != null && ca >= 9.5) || caYok ? Math.max(2, sT || 0) : nonOn ? (sT || null) : null; }
+    else { var gerek = lowP || (ca != null && ca >= 9.5) || (pth != null && pth >= 300 * s) || P > 6 || caYok; sv = gerek ? (nonOn && (sT || 0) >= 3 && pP != null && pP > 5.5 ? 6 : Math.max(3, sT || 0)) : nonOn ? (sT || null) : null; }
+    if (sv != null && sv > 6) sv = 6;
+    if (sv != null || nonOn) { var sy = sv == null ? 'devam' : !nonOn ? (sv > 0 ? 'basla' : 'yok') : sv === 0 ? 'kes' : sT == null ? 'degis' : sv > sT ? 'artir' : sv < sT ? 'azalt' : 'devam';
+      if (!sf && sy !== 'yok' && P >= 4.5) sf = 'Excel P × Ca çarpımını ve Kt/V ≥ 1,4 koşulunu kullanır; KDIGO 2017 çarpımı karar ölçütü olarak kullanmaz, yerine düzeltilmiş Ca ≥ 9,5 mg/dL ve iPTH < 2 × üst sınır kalsiyumsuz bağlayıcı gerekçesi alınmıştır.';
+      if (sy !== 'yok') out.push(Object.assign(rs, { yon: sy, oneri: sy === 'kes' ? 'Kes' : (nonOn ? x.v.nonCa : 'Sevelamer 800 mg') + ', ' + tb(sv == null ? sT : sv), neden: nd + (lowP ? '; iPTH < 2 × üst sınır' : '') + (ca != null && ca >= 9.5 ? '; Ca yüksek-normal' : '') + (sy === 'degis' ? '; mevcut tablet sayısı girilmemiş' : '') + '.', fark: sf, set: sy === 'devam' ? null : sv === 0 ? { nonCa: 'Yok', nonCaTb: 0 } : Object.assign(nonOn ? {} : { nonCa: 'Sevelamer' }, { nonCaTb: sv }) })); }
+    if (P > 8.5) out.push({ k: 'sukral', l: 'Sukralfat (Antepsin)', src: 'KDIGO KBH-MKB 2017, 4.1.7', simdi: '—', yon: 'uyari', oneri: 'Önerilmez', neden: 'P ' + tr(P, 1) + ' mg/dL; alüminyum içerdiği için uzun süreli fosfor bağlayıcı olarak kullanılmaz. Diyet, uyum ve diyaliz dozu gözden geçirilmeli.', fark: 'HD Excel’i P > 8,5 mg/dL’de sukralfat 2×1 önerir.' });
+    return out;
+  }
+  function planVitD(x) {
+    var pd = x.p.mod === 'PD', P = x.n('p'), ca = x.c.dca, pth = x.n('pth'), U = x.n('pthUst') || 65, s = U / 65, t = x.v.vitD, on = var_(x, 'vitD'), dw = x.n('vitDDoz'), R = { k: 'vitD', l: 'Aktif D vitamini', src: KP + 'KDIGO KBH-MKB 2017, 4.2.2–4.2.4' };
+    R.simdi = on ? t + (dw ? ' ' + tr(dw, 2) + ' µg/hafta' : '') : 'Yok';
+    if (pth == null) return on ? Object.assign(R, { yon: 'izle', oneri: 'iPTH gerekli', neden: 'Bu ay iPTH girilmedi (Excel iPTH’yi aylık ister).' }) : null;
+    var nd = 'iPTH ' + tr(pth) + (P != null ? ', P ' + tr(P, 1) : '') + (ca != null ? ', düzeltilmiş Ca ' + tr(ca, 1) : ''), hedef = null, ad = null, yaz = '', fark = '';
+    var dur = (ca != null && ca > 10.2) || (P != null && P > 6.5) || pth < 2 * U;
+    if (!pd) {
+      var pOn = t === 'Parikalsitol', pa = null;
+      if ((P != null && P > 6) || (ca != null && ca > 10.5)) pa = pOn ? 0 : null;
+      else if (pth > 600 * s && P != null && P < 5.5 && (ca == null || ca < 10.2)) pa = pth < 750 * s ? 15 : pth < 950 * s ? 20 : 30;
+      else if (pOn && pth > 450 * s && (ca == null || ca < 10.5) && (P == null || P <= 6)) pa = pth < 600 * s ? 10 : (dw || 15);
+      else if (pOn) pa = 0;
+      if (pa) { hedef = pa; ad = 'Parikalsitol'; yaz = 'IV parikalsitol ' + (pa === 10 ? '5 µg × 2/hafta' : pa === 15 ? '5 µg × 3/hafta' : pa === 20 ? '10 µg × 2/hafta' : pa === 30 ? '10 µg × 3/hafta' : tr(pa) + ' µg/hafta'); }
+      else {
+        var b = dur ? 0 : pth >= 250 * s && pth <= 300 * s && P < 6 && ca <= 8.5 ? 1 : pth > 300 * s && pth <= 400 * s && P <= 6 && ca <= 9 ? 2 : pth > 400 * s && pth <= 450 * s && P <= 6.1 && ca <= 9.8 ? 3 : pth > 450 * s && pth <= 550 * s && P <= 6.2 && ca <= 10 ? 4 : pth > 550 * s && P <= 6.5 && ca <= 10.2 ? 6 : 0;
+        hedef = b; ad = 'Kalsitriol'; yaz = 'IV kalsitriol ' + ({ 1: '1 µg × 1/hafta', 2: '1 µg × 2/hafta', 3: '1 µg × 3/hafta', 4: '2 µg × 2/hafta', 6: '2 µg × 3/hafta' }[b] || '');
+      }
+    } else {
+      var g = dur ? 0 : pth >= 250 * s && pth <= 300 * s && P < 6 && ca <= 8.5 ? 0.25 : pth > 300 * s && pth <= 400 * s && P <= 6 && ca <= 9 ? 0.25 : pth > 400 * s && pth <= 450 * s && P <= 6.1 && ca <= 9.8 ? 0.5 : pth > 450 * s && pth <= 550 * s && P <= 6.2 && ca <= 10 ? 0.5 : pth > 550 * s && P <= 6.5 && ca <= 10.2 ? 1 : 0;
+      hedef = r2(g * 7); ad = on ? t : 'Kalsitriol'; yaz = 'Oral ' + (on ? t.toLocaleLowerCase('tr') : 'aktif D vitamini (ör. QALYVIZ)') + ' ' + (g === 1 ? '0,5 µg × 2/gün' : tr(g, 2) + ' µg/gün');
+      fark = 'Excel dozu “mg” olarak yazar (0,25 mg, 0,5 mg); doğru birim µg’dır.';
+    }
+    if (P != null && P > 5.5 && hedef > 0 && (!dw || hedef > dw)) { hedef = on ? dw : 0; fark = (fark ? fark + ' ' : '') + 'Excel P 6,0–6,5 mg/dL’ye kadar aktif D vitamini başlatır veya artırır; hiperfosfatemide (P > 5,5) başlanmaz ve artırılmaz, mevcut doz korunur.'; }
+    if (on && dw == null && !hedef && !dur && pth <= 9 * U) return Object.assign(R, { yon: 'devam', oneri: R.simdi, neden: nd + '; mevcut doz girilmemiş.' });
+    if (on && !hedef && !dur && pth <= 9 * U && (P == null || P <= 5.5) && (ca == null || ca <= 10.2) && ad === t && dw) { hedef = dw; fark = (fark ? fark + ' ' : '') + 'Excel bu iPTH bandında Ca veya P sınırı aşıldığı için keser; iPTH hedef aralıkta (2–9 × üst sınır), Ca ≤ 10,2 ve P ≤ 5,5 olduğundan mevcut doz korunur.'; }
+    if (!on && !hedef) return null;
+    var yon = !on ? 'basla' : !hedef ? 'kes' : ad !== t ? 'degis' : dw == null ? 'devam' : hedef > dw ? 'artir' : hedef < dw ? 'azalt' : 'devam';
+    var nn = nd + (pth < 2 * U ? '; iPTH < 2 × üst sınır' : '') + (ca != null && ca > 10.2 ? '; hiperkalsemi' : '') + (P != null && P > 6.5 ? '; P > 6,5 mg/dL' : '') + (s !== 1 ? '; eşikler iPTH üst sınırı ' + tr(U) + ' pg/mL’ye göre ölçeklendi' : '') + '.';
+    return Object.assign(R, { yon: yon, oneri: yon === 'kes' ? 'Kes' : yon === 'devam' ? R.simdi : yaz + ' (' + tr(hedef, 2) + ' µg/hafta)', neden: nn, fark: fark, set: yon === 'devam' ? null : yon === 'kes' ? { vitD: 'Yok', vitDDoz: 0 } : { vitD: ad, vitDDoz: hedef } });
+  }
+  function planKalsim(x) {
+    var pth = x.n('pth'), ca = x.c.dca, U = x.n('pthUst') || 65, s = U / 65, et = x.v.kalsim === 'Etelkalsetid', on = var_(x, 'kalsim'), d = x.n('kalsimDoz'), L = et ? ETEL : SINA, u = et ? ' mg × 3/hafta (diyaliz sonrası)' : ' mg/gün', pp = x.pv ? val(x.p.mod, x.pv, 'pth') : null;
+    var R = { k: 'kalsim', l: et ? 'Etelkalsetid' : 'Sinakalset', src: KP + 'KDIGO KBH-MKB 2017, 4.2.3; ürün bilgisi', simdi: on ? x.v.kalsim + (d ? ' ' + tr(d) + u : '') : 'Yok' };
+    if (pth == null) return on ? Object.assign(R, { yon: 'izle', oneri: 'iPTH gerekli', neden: 'Bu ay iPTH girilmedi.' }) : null;
+    var nd = 'iPTH ' + tr(pth) + (pp != null ? ' (önceki ' + tr(pp) + ')' : '') + (ca != null ? ', düzeltilmiş Ca ' + tr(ca, 1) : ''), h = null, fark = '', ek = '';
+    if (ca != null && ca < 7.5) { h = on ? 0 : null; ek = '; Ca < 7,5 mg/dL'; }
+    else if (ca != null && ca < 8.4) { h = on ? (d && d > L[0] ? basamak(L, d, -1) : 0) : null; ek = '; Ca 7,5–8,4 mg/dL'; fark = 'Excel düzeltilmiş Ca < 8,5 mg/dL’de sinakalseti keser; ürün bilgisi ve KDIGO hafif hipokalsemide doz azaltmayı önerir.'; }
+    else if (pth >= 700 * s) {
+      if (!on || !d) { h = et ? 5 : 30; }
+      else if (pp != null && pth < 0.7 * pp) { h = d; ek = '; iPTH ≥ %30 düştü'; fark = 'Excel iPTH ≥ %30 düşünce dozu bir basamak azaltır; iPTH hâlâ 9 × üst sınırın üzerinde olduğu için doz korunur.'; }
+      else { h = basamak(L, d, 1); if (!et && d >= 90) fark = 'Excel üst dozu 90 mg/gün ile sınırlar; ürün bilgisinde azami doz 180 mg/gündür.'; }
+    }
+    else if (pth > 9 * U) { h = on ? d : null; if (on) fark = 'Excel iPTH < 700 pg/mL’de sinakalseti keser; KDIGO hedefi 2–9 × üst sınırdır, ani kesme geri tepmeye yol açar.'; }
+    else if (pth >= 2 * U) { h = on ? d : null; if (on) { ek = '; iPTH hedef aralıkta (2–9 × üst sınır)'; fark = 'Excel iPTH < 700 pg/mL’de sinakalseti keser; hedef aralıkta doz korunur.'; } }
+    else { h = on ? (d && d > L[0] ? basamak(L, d, -1) : 0) : null; ek = '; iPTH < 2 × üst sınır'; }
+    if (h == null) return null;
+    var yon = !on ? 'basla' : h === 0 ? (ca != null && ca < 7.5 ? 'ara' : 'kes') : d == null ? 'devam' : h > d ? 'artir' : h < d ? 'azalt' : 'devam';
+    return Object.assign(R, { yon: yon, oneri: h === 0 ? (yon === 'ara' ? 'Ara ver' : 'Kes') : (on ? x.v.kalsim : 'Sinakalset') + ' ' + tr(h) + u, neden: nd + ek + '.', fark: fark, set: yon === 'devam' ? null : h === 0 ? { kalsimDoz: 0 } : Object.assign(on ? {} : { kalsim: 'Sinakalset' }, { kalsimDoz: h }) });
+  }
+  function planK(x) {
+    var K = x.n('k'), on = var_(x, 'kBag'), pk = x.pv ? val(x.p.mod, x.pv, 'k') : null, hd = x.p.mod === 'HD', R = { k: 'kBag', l: 'Potasyum bağlayıcı', src: KP + 'KDIGO 2020 potasyum uzlaşısı; SZC ürün bilgisi', simdi: on ? x.v.kBag + (x.v.kBagDoz ? ', ' + x.v.kBagDoz : '') : 'Yok' };
+    if (K == null) return on ? Object.assign(R, { yon: 'izle', oneri: 'Potasyum gerekli', neden: 'Bu ay potasyum girilmedi.' }) : null;
+    var nd = (hd ? 'Giriş K ' : 'K ') + tr(K, 1) + (pk != null ? ' (önceki ' + tr(pk, 1) + ')' : ''), idame = hd ? '5 g, diyaliz dışı günlerde' : '5 g/gün', fark = 'Excel K ≥ 7’de 3×1, 6,5–7’de 2×1 önerir ve 6,5 altında keser; ürün bilgisine göre yükleme 48 saatle sınırlıdır, idame 5 g’dır.';
+    if (on) {
+      if (K < 3.5) return Object.assign(R, { yon: 'kes', oneri: 'Kes', neden: nd + '; hipokalemi.', set: { kBag: 'Yok', kBagDoz: '' } });
+      if (K < 4) return Object.assign(R, { yon: 'azalt', oneri: x.v.kBag + ', ' + (hd ? '5 g haftada 2 gün' : '5 g gün aşırı'), neden: nd + '; K düşük-normal.', set: { kBagDoz: hd ? '5 g haftada 2 gün' : '5 g gün aşırı' } });
+      if (K <= 5.5) return Object.assign(R, { yon: 'devam', oneri: R.simdi, neden: nd + '; hedefte.' });
+      return Object.assign(R, { yon: 'artir', oneri: x.v.kBag + ', ' + (hd ? '10 g, diyaliz dışı günlerde' : '10 g/gün'), neden: nd + '; bağlayıcı altında yüksek. Diyet, ilaçlar ve ' + (hd ? 'diyaliz dozu/diyalizat K' : 'PD reçetesi') + ' gözden geçirilmeli.', set: { kBagDoz: hd ? '10 g, diyaliz dışı günlerde' : '10 g/gün' } });
+    }
+    if (K >= 6.5) return Object.assign(R, { yon: 'basla', oneri: 'Sodyum zirkonyum siklosilikat 10 g × 3/gün, 48 saat; sonra ' + idame, neden: nd + '; belirgin hiperkalemi. EKG değerlendirmesi önerilir.', fark: fark, set: { kBag: 'Sodyum zirkonyum siklosilikat', kBagDoz: idame } });
+    if (K > 5.5 && pk != null && pk > 5.5) return Object.assign(R, { yon: 'basla', oneri: 'Sodyum zirkonyum siklosilikat ' + idame, neden: nd + '; iki ardışık ölçümde > 5,5.', fark: 'Excel K < 6,5’te bağlayıcı başlatmaz.', set: { kBag: 'Sodyum zirkonyum siklosilikat', kBagDoz: idame } });
+    return null;
+  }
+  function planEk(x) {
+    var o = [], h = x.n('hb'), P = x.n('p'), K = x.n('k'), al = x.n('alb'), pd = x.p.mod === 'PD', hb = x.lastS('hbsag'), ab = x.n('antiHbs') != null ? x.n('antiHbs') : x.prevOf('antiHbs');
+    if (h != null && h <= 7.5) o.push({ k: 'transf', l: 'Eritrosit transfüzyonu', yon: 'uyari', oneri: 'Hekim değerlendirmesi', neden: 'Hb ' + tr(h, 1) + ' g/dL; karar belirti ve bulgulara göre verilir.', src: KP + 'KDIGO Anemi 2026', simdi: '—' });
+    if (P != null && P >= 6.5) o.push({ k: 'dP', l: 'Düşük fosforlu diyet', yon: 'uyari', oneri: 'Diyetisyen; katkı maddesi içeren fosfora dikkat', neden: 'P ' + tr(P, 1) + ' mg/dL.', src: KP + 'KDIGO KBH-MKB 2017, 4.1.8', simdi: '—' });
+    if (K != null && K > 5) o.push({ k: 'dK', l: 'Düşük potasyumlu diyet', yon: 'uyari', oneri: 'Potasyumdan zengin besinlerin sınırlanması', neden: 'K ' + tr(K, 1) + ' mmol/L.', src: KP + 'KDIGO 2020 potasyum uzlaşısı', simdi: '—' });
+    if (al != null && al <= 3.6) o.push({ k: 'dPr', l: 'Protein alımı', yon: 'uyari', oneri: pd ? '1,0–1,2 g/kg/gün' : '1,0–1,2 g/kg/gün (yetersizse destek)', neden: 'Albümin ' + tr(al, 1) + ' g/dL; PEW açısından değerlendirilmeli.', src: KP + 'KDOQI Nutrisyon 2020; ISRNM–ISPD 2026', simdi: '—', fark: 'Excel > 1,2 g/kg/gün önerir; KDOQI 2020 ve ISRNM–ISPD 2026 1,0–1,2 g/kg/gün önerir.' });
+    if (hb === 'Negatif' && ab != null && ab < 10 && x.v.hbvAsi !== 'Seri sürüyor') o.push({ k: 'hbv', l: 'Hepatit B aşısı', yon: 'uyari', oneri: 'Çift doz (40 µg) seri', neden: 'HBsAg negatif, anti-HBs ' + tr(ab) + ' mIU/mL.', src: KP + 'CDC diyaliz önerileri', simdi: x.v.hbvAsi || '—', fark: 'Excel anti-HBs < 15 mIU/mL eşiğini kullanır; koruyucu düzey 10 mIU/mL’dir.' });
+    return o;
+  }
+  var PLAN_DOC = [
+    ['ESA', 'Bu ayın Hb’si ve önceki aya göre değişimine göre çarpan: Hb ≤ 10 ve artış < 1 g/dL → +%25; Hb 10–11 ve artış < 0,5 → +%25; artış 1–2 → %15–30 azalt; artış ≥ 2 → %35–40 azalt; Hb 11,5–12 → en az %25 azalt; Hb 12–13 → %50 azalt; Hb ≥ 13 → ara ver. ESA hiporesponsivitesinde artırılmaz. Yuvarlama: darbepoetin kalemleri, epoetin 1000 IU, CERA kalemleri. Üst sınır 150 IU/kg/hafta (darbepoetinde Excel dönüşüm tablosu). Başlangıç: Hb < 10 ve ferritin ≥ 100 ise darbepoetin 0,45 µg/kg/hafta; ara verilmişse son dozun %75’i.', 'Excel Hb ≤ 10’da %50 artırır, Hb ≥ 12’de keser, Hb 10–11’de 65 IU/kg ile başlar, ferritin < 100’de idame ESA’yı da keser.', 'KDIGO Anemi 2026; darbepoetin ürün bilgisi; yazarların ESA kuralı'],
+    ['IV demir', 'Ferritin > 700 ng/mL, TSAT ≥ %40 veya aktif enfeksiyonda ara verilir. TSAT varsa HD: ferritin ≤ 500 ve TSAT ≤ %30; PD: ferritin < 100 ve TSAT < %40 veya ferritin 100–299 ve TSAT < %25. TSAT yoksa Excel kuralı: ferritin < 100 veya ferritin < 400 ve Hb < 12.', 'Excel yalnız ferritine bakar.', 'KDIGO Anemi 2026, 2.1–2.4'],
+    ['Kalsiyum içeren bağlayıcı', 'Düzeltilmiş Ca > 10,2 → kes. P 4,5–5,5 ve Ca < 9,5 → kullanıyorsa 2×1. P 5,5–7,5, iPTH ≥ 250 × (üst sınır/65) ve Ca ≤ 10,2 → 3×1. P < 3,5 → azalt veya kes; P 3,5–4,5 → sürdür. iPTH düşük veya P > 7,5 → kalsiyum içermeyen bağlayıcı.', 'Excel P 6–7,5’te 3×2 önerir ve P ≤ 4,5’te keser.', 'KDIGO KBH-MKB 2017, 4.1.5–4.1.6'],
+    ['Sevelamer', 'P ≥ 4,5 ve (iPTH < 2 × üst sınır veya Ca ≥ 9,5 veya kalsiyumlu bağlayıcı kesildi) → 2×1; P ≥ 5,5 ve (aynı koşullar veya iPTH ≥ 300 × ölçek veya P > 6) → 3×1; ardışık iki ayda P > 5,5 ve 3×1 alıyorsa 3×2. P < 3,5 → azalt veya kes.', 'Excel P × Ca çarpımı ve Kt/V ≥ 1,4 koşulunu kullanır.', 'KDIGO KBH-MKB 2017, 4.1.5–4.1.6'],
+    ['Aktif D vitamini', 'HD: iPTH bandına göre IV kalsitriol 1 µg × 1 → 2 µg × 3/hafta; iPTH > 600 × ölçek, P < 5,5 ve Ca < 10,2 ise IV parikalsitol 5 µg × 3 → 10 µg × 3/hafta. PD: oral 0,25 → 0,5 µg × 2/gün. Ca > 10,2, P > 6,5 veya iPTH < 2 × üst sınırda kesilir; P > 5,5’te başlanmaz ve artırılmaz. iPTH hedef aralıkta, Ca ≤ 10,2 ve P ≤ 5,5 ise mevcut doz korunur. Eşikler iPTH üst sınırına göre ölçeklenir.', 'Excel PD dozlarını “mg” yazar (doğrusu µg) ve P 6,5’e kadar başlatır.', 'KDIGO KBH-MKB 2017, 4.2.2–4.2.4'],
+    ['Sinakalset', 'iPTH ≥ 700 × ölçek: yoksa 30 mg/gün başla; iPTH %30’dan az düştüyse bir basamak artır (30 → 60 → 90 → 120 → 180). iPTH hedef aralıkta (2–9 × üst sınır) doz korunur; < 2 × üst sınırda azaltılır. Ca 7,5–8,4 → bir basamak azalt; Ca < 7,5 → ara ver.', 'Excel 90 mg’da durur, iPTH ≥ %30 düşünce azaltır, iPTH < 700’de ve Ca < 8,5’te keser.', 'KDIGO KBH-MKB 2017, 4.2.3; ürün bilgisi'],
+    ['Potasyum bağlayıcı', 'K ≥ 6,5 → sodyum zirkonyum siklosilikat 10 g × 3/gün 48 saat, sonra 5 g (HD’de diyaliz dışı günler). İki ardışık ölçümde K > 5,5 → 5 g. Bağlayıcı altında K < 3,5 → kes; 3,5–4 → azalt; > 5,5 → 10 g.', 'Excel K ≥ 7’de 3×1, 6,5–7’de 2×1 sürekli önerir, 6,5 altında keser.', 'KDIGO 2020 potasyum uzlaşısı; ürün bilgisi'],
+    ['Diğer uyarılar', 'Hb ≤ 7,5 → transfüzyon için hekim değerlendirmesi; P ≥ 6,5 → düşük fosforlu diyet; K > 5 → düşük potasyumlu diyet; albümin ≤ 3,6 → protein 1,0–1,2 g/kg/gün; HBsAg negatif ve anti-HBs < 10 → hepatit B aşısı; P > 8,5’te sukralfat önerilmez.', 'Excel protein > 1,2 g/kg, aşı için anti-HBs < 15 ve P > 8,5’te sukralfat (alüminyum) önerir.', 'KDOQI Nutrisyon 2020; ISRNM–ISPD 2026; CDC; KDIGO KBH-MKB 2017, 4.1.7'],
+    ['Uygulama', 'Öneriler her ay bu ayın laboratuvarı ve önceki ayın değerleriyle yeniden hesaplanır. Hekimin onayladığı değişiklikler bir sonraki ay eklendiğinde o ayın ilaç alanlarına işlenir; onaylanmayanlar taşınmaz.', '', '']
+  ];
+  function ilacPlan(x) {
+    var m = x.p.mod, W = m === 'HD' ? (x.n('kuru') != null ? x.n('kuru') : x.n('postW')) : (x.n('kilo') != null ? x.n('kilo') : x.n('hedef'));
+    var rows = [planEsa(x, W), planDemir(x)].concat(planBag(x), [planVitD(x), planKalsim(x), planK(x)], planEk(x));
+    return rows.filter(function (r) { return r && r.yon !== 'yok'; });
+  }
   function evaluate(p, ay) {
     var v = (p.visits || {})[ay] || {}, m = p.mod, c = compute(p, v, ay), pm = prevMonth(p, ay), pv = pm ? p.visits[pm] : null, pc = pv ? compute(p, pv, pm) : null;
     var any = fieldsOf(m).some(function (f) { return !f.c && v[f.k] != null && v[f.k] !== ''; });
@@ -741,7 +928,8 @@
     RULES[m].forEach(function (r) { var w; try { w = r.w(x); } catch (e) { w = false; } if (!w) return; out.push({ id: r.id, g: r.g, s: r.s, k: r.k, why: w === true ? '' : w, o: typeof r.o === 'function' ? r.o(x) : r.o, src: r.src }); });
     var ord = { bad: 0, warn: 1, info: 2, ok: 3 };
     out.sort(function (a, b) { return ord[a.s] - ord[b.s]; });
-    return { c: c, recs: out, range: outOfRange(m, v), prev: pm, any: any };
+    var plan = []; try { plan = ilacPlan(x); } catch (e) { plan = []; }
+    return { c: c, recs: out, range: outOfRange(m, v), prev: pm, any: any, plan: plan };
   }
   function ANEMKB(add, c) {
     add('ane', 'ESA dozu / kg', c.esaKg, 'IU/kg/hafta', 1, 'darbepoetin 1 µg ≈ 200 IU kabulüyle');
@@ -794,6 +982,6 @@
       ['Toplam sıvı çıkışı ≥ 1000 mL/gün', function (c) { return c.cikis == null ? null : c.cikis >= 1000; }], ['Serum K 3,5–5,5', function (c, n) { return n('k') == null ? null : n('k') >= 3.5 && n('k') <= 5.5; }], ['Hipertonik (%3,86) kullanılmıyor', function (c) { return !c.L || c.L['386'] == null ? (c.recete ? true : null) : c.L['386'] === 0; }],
       ['Serum HCO₃ ≥ 22', function (c, n) { return n('hco3') == null ? null : n('hco3') >= 22; }], ['İdrar ≥ 100 mL/gün (rezidüel fonksiyon)', function (c, n) { return n('idrar') == null ? null : n('idrar') >= 100; }]].concat(KPI_ORT)
   };
-  root.DR = { takvim: takvim, SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
+  root.DR = { PLAN_DOC: PLAN_DOC, ilacPlan: function (p, ay) { return evaluate(p, ay).plan; }, takvim: takvim, SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
     f: { watson: watson, bsa: bsa, spKtV: spKtV, eKtV: eKtV, stdKtV: stdKtV } };
 })(typeof window !== 'undefined' ? window : globalThis);

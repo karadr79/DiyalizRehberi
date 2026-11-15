@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.7', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -18,7 +18,9 @@
   const byMod = m => S.patients.filter(p => p.mod === m).sort((a, b) => String(a.kod).localeCompare(String(b.kod), 'tr', { numeric: true }));
   const getP = id => id && id[0] === '_' ? TMP[id.slice(1)] : S.patients.find(p => p.id === id);
   const lastAy = p => { const m = D.sortedMonths(p); return m.length ? m[m.length - 1] : null; };
-  function newVisit(p, ay) { const v = {}, pm = D.prevMonth(p, ay); if (pm) D.fieldsOf(p.mod).forEach(f => { if (f.c && p.visits[pm][f.k] != null && p.visits[pm][f.k] !== '') v[f.k] = p.visits[pm][f.k]; }); p.visits[ay] = v; return v; }
+  function newVisit(p, ay) { const v = {}, pm = D.prevMonth(p, ay); if (pm) { D.fieldsOf(p.mod).forEach(f => { if (f.c && p.visits[pm][f.k] != null && p.visits[pm][f.k] !== '') v[f.k] = p.visits[pm][f.k]; });
+      const rx = p.visits[pm].rx || {}; let n = 0; if (Object.values(rx).includes('e')) D.ilacPlan(p, pm).forEach(r => { if (r.set && rx[r.k] === 'e') { Object.entries(r.set).forEach(([k, x]) => { v[k] = x === '' ? '' : String(x); }); n++; } }); if (n) setTimeout(() => DA.toast(n + ' onaylı doz değişikliği bu aya işlendi'), 300); }
+    p.visits[ay] = v; return v; }
 
   /* ---------------- Gezinme ---------------- */
   const NAV = [['', [['home', 'Ana sayfa']]],
@@ -87,6 +89,16 @@
     else inp = `<input id="${id}" ${attr}="${f.k}" type="text" ${f.t === 'n' ? 'inputmode="decimal"' : ''} autocomplete="off" value="${esc(v)}">`;
     return `<div class="f${f.t === 'x' ? ' wide' : ''}" data-f="${f.k}">${lab}${inp}<small data-h="${esc(f.h || '')}">${esc(f.h || '')}</small></div>`;
   }
+  /* ---------------- İlaç planı ---------------- */
+  const YON = { basla: ['info', 'Başla'], artir: ['warn', 'Artır'], azalt: ['warn', 'Azalt'], degis: ['warn', 'Değiştir'], devam: ['ok', 'Devam'], kes: ['bad', 'Kes'], ara: ['bad', 'Ara ver'], izle: ['info', 'İzle'], uyari: ['warn', 'Dikkat'] };
+  const rxAd = k => k === 'e' ? 'Onaylandı' : k === 'h' ? 'Uygulanmadı' : '';
+  function rxHTML(r, v, canDecide) {
+    const k = (v.rx || {})[r.k], y = YON[r.yon] || YON.izle;
+    return `<div class="rx ${r.yon}"><div class="rx-h"><b>${esc(r.l)}</b><span class="pill ${y[0]}">${y[1]}</span></div>
+      <div class="rx-d"><div><small>Şu an</small><span>${esc(r.simdi || '—')}</span></div><i aria-hidden="true">→</i><div><small>Öneri</small><strong>${esc(r.oneri)}</strong></div></div>
+      <p>${esc(r.neden)}</p>${r.fark ? `<p class="rx-f"><b>Excel protokolünden farkı:</b> ${esc(r.fark)}</p>` : ''}
+      <div class="ft"><span class="src">${esc(r.src || '')}</span>${canDecide && r.set ? `<span class="kar noprint" role="group" aria-label="Hekim kararı"><button type="button" data-act="rx" data-id="${r.k}" data-val="e" aria-pressed="${k === 'e'}">Onayla</button><button type="button" data-act="rx" data-id="${r.k}" data-val="h" aria-pressed="${k === 'h'}">Uygulanmadı</button></span>` : ''}</div></div>`;
+  }
   function recHTML(r, v, canDecide) {
     const k = (v.kar || {})[r.id];
     return `<div class="rec2 ${r.s}"><div class="hd"><span class="pill ${r.s}">${LVL[r.s]}</span><b>${esc(r.k)}</b>${r.why ? `<span class="why">${esc(r.why)}</span>` : ''}</div><p>${esc(r.o)}</p>
@@ -108,7 +120,7 @@
       <div class="row"><button class="btn pri" data-go="list/${m}">Hastalar</button><button class="btn" data-go="hizli/${m}">Hızlı hesap</button><button class="btn" data-go="ozet/${m}">Göstergeler</button></div></section>`;
   }
   function viewHome() {
-    const road = [['Diyaliz yeterliliği', 1], ['Diyaliz reçetesi', 1], ['Volüm ve kan basıncı', 1], ['Anemi', 1], ['KBH-MKB', 1], ['Nutrisyon', 1], ['Potasyum ve asit-baz', 1], ['Damar erişimi / kateter', 1], ['Enfeksiyon ve aşı', 1], ['Tetkik takvimi', 1]];
+    const road = [['Diyaliz yeterliliği', 1], ['Diyaliz reçetesi', 1], ['Volüm ve kan basıncı', 1], ['Anemi', 1], ['KBH-MKB', 1], ['Nutrisyon', 1], ['Potasyum ve asit-baz', 1], ['Damar erişimi / kateter', 1], ['Enfeksiyon ve aşı', 1], ['Tetkik takvimi', 1], ['İlaç planı ve doz ayarı', 1]];
     return `<header><div class="eyebrow">Kronik diyaliz · aylık izlem ve karar desteği</div><h1>Diyaliz Rehberi</h1>
       <p class="lede">Hemodiyaliz ve periton diyalizi hastalarının aylık değerlendirmesinde hesaplamaları yapar, kılavuza dayalı önerileri gerekçesiyle sunar ve tüm kaydı PDF ile Excel olarak verir.</p>${authors()}</header>
       ${storageOK ? '' : '<p class="note warn">Bu ortamda cihaz belleğine yazılamıyor; girilen veriler sayfa kapanınca kaybolur. Çalışmayı “Veri ve yedek” bölümünden dosyaya alın.</p>'}
@@ -146,7 +158,8 @@
     const solTab = () => `<div class="tbl soltab"><table><thead><tr><th>Solüsyon</th><th>Torba hacmi (L)</th><th>Bekleme (saat)</th><th>Değişim (adet/gün)</th></tr></thead><tbody>${SOLS.map(q => `<tr><td><b>${q[1]}</b></td>${cell('s' + q[0] + 'V')}${cell('s' + q[0] + 'H')}${cell('s' + q[0] + 'N')}</tr>`).join('')}</tbody></table></div><p class="cap">Excel’deki “2L-3H-3D” yazımı: 2 L torba, 3 saat bekleme, günde 3 değişim. Kullanılmayan solüsyonu boş bırakın.</p>`;
     return `<div class="sum" id="sum"></div>` + D.SCHEMA[p.mod].map(g => `<section class="calc" id="g-${g.id}"><header><b>${g.t}</b><span>${esc(g.d || '')}</span></header><div class="cbody">
       <div class="fields">${g.f.filter(f => !SOLR.test(f.k)).map(f => fieldHTML(f, v[f.k], 'data-k', 'v-')).join('')}</div>${g.f.some(f => SOLR.test(f.k)) ? solTab() : ''}<div class="kv" id="out-${g.id}"></div><div class="recs" id="rec-${g.id}"></div></div></section>`).join('') +
-      `<section class="calc" id="g-mev"><header><b>${D.GRP.mev}</b><span>Diyaliz Merkezleri Hakkında Yönetmelik</span></header><div class="cbody"><div class="recs" id="rec-mev"></div></div></section>
+      `<section class="calc" id="g-ilac"><header><b>İlaç planı</b><span>Bu ayın laboratuvarı ve önceki aya göre değişime göre doz önerileri</span></header><div class="cbody"><div class="rxs" id="plan"></div>${p.temp ? '' : `<div class="row noprint" style="margin-top:10px"><button class="btn sm pri" data-act="rxAll">Tüm değişiklikleri onayla</button><span class="cap">Onaylanan dozlar, bir sonraki ay eklendiğinde o ayın ilaç alanlarına işlenir.</span></div>`}<p class="cap">Doz basamakları ünitenin aylık takip protokolüne (Excel) dayanır; KDIGO ve ürün bilgisiyle çelişen noktalar düzeltilmiş ve her satırda gösterilmiştir. Son karar hekimindir.</p></div></section>
+      <section class="calc" id="g-mev"><header><b>${D.GRP.mev}</b><span>Diyaliz Merkezleri Hakkında Yönetmelik</span></header><div class="cbody"><div class="recs" id="rec-mev"></div></div></section>
       <section class="calc"><header><b>Hekim değerlendirmesi ve plan</b><span>Bu ay uygulanan tedavi değişiklikleri</span></header><div class="cbody"><div class="f wide"><label for="v-plan">Plan</label><textarea id="v-plan" data-k="plan" rows="4">${esc(v.plan || '')}</textarea></div></div></section>`;
   }
   function viewPatient(p, ay, tab) {
@@ -183,6 +196,7 @@
     });
     const bad = new Set(ev.range.map(f => f.k));
     $$('#view .f[data-f]').forEach(el => { const k = el.dataset.f, f = fm[k], sm = el.querySelector('small'); if (!f || !sm || !el.querySelector('[data-k]')) return; const e = bad.has(k); el.classList.toggle('err', e); sm.textContent = e ? `Beklenen aralık ${D.tr(f.mn)}–${D.tr(f.mx)}; hesaba alınmadı` : sm.dataset.h; });
+    const pb = $('#plan'); if (pb) { if (!ev.plan.length) pb.innerHTML = '<p class="cap">Doz önerisi için Hb, ferritin, Ca, P, iPTH ve K değerlerini ve mevcut ilaçları girin.</p>'; else { if (pb.querySelector(':scope > p.cap')) pb.innerHTML = ''; patch(pb, ev.plan.map(r => ['rx-' + r.k, rxHTML(r, v, !p.temp)]), (el, yeni) => pop(el, yeni ? 'rec-new' : 'dv-pop'), !!seen); } }
     const ilk = !seen; seen = new Set(ev.recs.map(r => r.id));
     const n = s => ev.recs.filter(r => r.s === s).length;
     const sumOld = $('#sum').textContent;
@@ -209,7 +223,7 @@
   function trend(p) {
     const ms = D.sortedMonths(p).slice(-12), cs = ms.map(a => D.compute(p, p.visits[a], a));
     const rows = TREND[p.mod].map(t => { const vals = ms.map((a, i) => t[1](cs[i], k => D.val(p.mod, p.visits[a], k))); return vals.some(x => x != null) ? `<tr><td>${t[0]}</td><td>${spark(vals, 110, 26)}</td>${vals.map(x => `<td class="n">${fmt(x, t[2])}</td>`).join('')}</tr>` : ''; }).join('');
-    return `<div class="sechead"><h2>Eğilim</h2><span class="cap">Son ${ms.length} kayıtlı ay</span></div>${rows ? `<div class="tbl"><table><thead><tr><th>Parametre</th><th>Seyir</th>${ms.map(a => `<th class="n">${ayKisa(a)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Eğilim için en az bir ayda veri girilmelidir.</div>'}`;
+    return `<div class="sechead"><h2>Eğilim</h2><span class="row noprint"><span class="cap">Son ${ms.length} kayıtlı ay</span><button class="btn sm pri" data-act="expTrend">Tüm aylar: PDF / Excel</button></span></div>${rows ? `<div class="tbl"><table><thead><tr><th>Parametre</th><th>Seyir</th>${ms.map(a => `<th class="n">${ayKisa(a)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty">Eğilim için en az bir ayda veri girilmelidir.</div>'}`;
   }
 
   /* ---------------- Ünite göstergeleri ---------------- */
@@ -221,7 +235,7 @@
       return `<tr><td>${k[0]}</td><td class="n">${ok}/${n}</td><td class="n">${pct == null ? '—' : '%' + pct}</td><td><div class="bar"><i style="width:${pct || 0}%"></i></div></td></tr>`; }).join('');
     const pri = evs.map(x => ({ p: x.p, b: x.ev.recs.filter(r => r.s === 'bad'), w: x.ev.recs.filter(r => r.s === 'warn').length })).filter(x => x.b.length || x.w).sort((a, b) => b.b.length - a.b.length || b.w - a.w);
     return `<header><div class="eyebrow">${MODN[m]}</div><h1>Ünite göstergeleri</h1><p class="lede">${ayAd(ay)}: ${act.length} hastanın vizit kaydı. Payda, ilgili verisi girilmiş hasta sayısıdır.</p></header>
-      <div class="months noprint">${all.slice(-12).map(a => `<button class="rt-chip" data-go="ozet/${m}/${a}" aria-current="${a === ay}">${ayKisa(a)}</button>`).join('')}</div>
+      <div class="months noprint">${all.slice(-12).map(a => `<button class="rt-chip" data-go="ozet/${m}/${a}" aria-current="${a === ay}">${ayKisa(a)}</button>`).join('')}<button class="btn sm pri" style="margin-left:auto" data-act="expKpi" data-mod="${m}" data-ay="${ay}">PDF / Excel</button></div>
       <div class="tbl"><table><thead><tr><th>Gösterge</th><th class="n">Hedefte</th><th class="n">Oran</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${m === 'PD' ? ispdPanel(ps, ay) : ''}
       <section><div class="sechead"><h2>Zamanı gelen tetkikler</h2></div>${(() => { const r = act.map(p => ({ p, t: D.takvim(p, ay).filter(x => x.durum !== 'guncel') })).filter(x => x.t.length); return r.length ? `<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Hasta</th><th>Tetkikler</th></tr></thead><tbody>${r.map(x => `<tr><td><a href="#p/${x.p.id}/${ay}/takvim" data-go="p/${x.p.id}/${ay}/takvim">${esc(x.p.kod)}</a></td><td>${x.t.map(t => esc(t.l)).join(', ')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="cap" style="margin-top:12px">Tüm tetkikler güncel.</p>'; })()}</section>
       <section><div class="sechead"><h2>Öncelikli hastalar</h2></div>${pri.length ? `<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Hasta</th><th>Öncelikli öneriler</th><th class="n">Uyarı</th></tr></thead><tbody>${pri.map(x => `<tr><td><a href="#p/${x.p.id}/${ay}" data-go="p/${x.p.id}/${ay}">${esc(x.p.kod)}</a></td><td>${x.b.map(r => esc(r.k)).join('; ') || '—'}</td><td class="n">${x.w}</td></tr>`).join('')}</tbody></table></div>` : '<p class="cap" style="margin-top:12px">Bu ay öncelikli öneri veya uyarı yok.</p>'}</section>${disc()}`;
@@ -248,6 +262,7 @@
     return `<header><div class="eyebrow">${MODN[m]}</div><h1>Kural tablosu</h1><p class="lede">Uygulamanın ${m} için verdiği her önerinin koşulu, metni ve dayanağı. Eşikler ve metinler bu tablodan yönetilir.</p></header>
       <p class="note warn">Sürüm ${VER}: anemi kuralları KDIGO Anemi 2026, KBH-MKB kuralları KDIGO 2017 metninden (KDIGO KBH KILAVUZLARI not defteri) alınmıştır. Yeterlilik, reçete ve volüm eşikleri KDOQI, ISPD ve EBPG’ye dayanır ve Nefroloji Kaynaklar eBook not defteriyle karşılaştırılmıştır; nutrisyon, damar erişimi, peritonit ve aşı kuralları aynı defterin kaynaklarına, hepatit taraması CDC ve KDIGO HCV 2022’ye, potasyum kuralları KDIGO tartışmalar konferansına dayanır. Tüm kurallar yazar onayı bekliyor. Düzeltme için tabloyu Excel’e alıp satır bazında not düşebilirsiniz.</p>
       <div class="row"><button class="btn pri" data-act="expRules">Kural tablosunu Excel’e aktar</button><button class="btn" data-go="kural/${m === 'HD' ? 'PD' : 'HD'}">${m === 'HD' ? 'PD' : 'HD'} kurallarına geç</button></div>
+      <section><div class="sechead"><h2>İlaç planı algoritması</h2><span class="cap">Doz motoru · HD ve PD</span></div><div class="tbl" style="margin-top:12px"><table><thead><tr><th>İlaç</th><th>Algoritma</th><th>Excel protokolünden farkı</th><th>Dayanak</th></tr></thead><tbody>${D.PLAN_DOC.map(r => `<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td class="cap">${esc(r[2])}</td><td class="cap">${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></section>
       ${gs.map(g => { const rs = D.RULES[m].filter(r => r.g === g); return rs.length ? `<section><div class="sechead"><h2>${D.GRP[g]}</h2><span class="cap">${rs.length} kural</span></div><div class="tbl" style="margin-top:12px"><table><thead><tr><th>Kod</th><th>Koşul</th><th>Öneri</th><th>Dayanak</th></tr></thead><tbody>${rs.map(r => `<tr><td style="white-space:nowrap"><span class="pill ${r.s}">${r.id}</span></td><td>${esc(r.k)}</td><td>${esc(ruleText(r))}</td><td>${esc(r.src)}</td></tr>`).join('')}</tbody></table></div></section>` : ''; }).join('')}${disc()}`;
   }
 
@@ -307,10 +322,35 @@
     it.push({ title: 'Hasta ve dönem', inputs: [['Hasta kodu', p.kod || '—'], ['Yöntem', MODN[p.mod]], ['Dönem', ayAd(ay)]].concat(D.PFIELDS.filter(f => !['kod'].includes(f.k) && (!f.only || f.only === p.mod) && p[f.k] != null && p[f.k] !== '').map(f => [f.l, f.t === 'm' ? ayAd(p[f.k]) : p[f.k], f.u || ''])) });
     D.SCHEMA[p.mod].forEach(g => { const ins = g.f.filter(f => v[f.k] != null && v[f.k] !== '').map(f => [f.l, v[f.k], f.u || '']), res = der.filter(x => x.g === g.id).map(x => [x.l, fmt(x.v, x.d), x.u, x.note]), nt = ev.recs.filter(r => r.g === g.id).map(r => recLine(r, v)); if (ins.length || res.length || nt.length) it.push({ title: g.t, inputs: ins, results: res, notes: nt }); });
     const mv = ev.recs.filter(r => r.g === 'mev'); if (mv.length) it.push({ title: D.GRP.mev, notes: mv.map(r => recLine(r, v)) });
+    if (ev.plan.length) it.push({ title: 'İlaç planı', results: ev.plan.map(r => [r.l, r.oneri, (YON[r.yon] || YON.izle)[1], 'Şu an: ' + (r.simdi || '—') + '. ' + r.neden + (r.fark ? ' Excel protokolünden farkı: ' + r.fark : '') + ((v.rx || {})[r.k] ? ' Hekim kararı: ' + rxAd(v.rx[r.k]) + '.' : '')]) });
     const tk = D.takvim(p, ay); if (tk.length) it.push({ title: 'Tetkik takvimi', results: tk.map(x => [x.l, x.durum === 'guncel' ? 'Güncel' : x.durum === 'gecikti' ? 'Zamanı geldi' : 'Kayıt yok', '', 'Aralık ' + x.i + ' ay; son ' + (x.son ? ayAd(x.son) : '—') + '; sonraki ' + (x.sonraki ? ayAd(x.sonraki) : '—')]) });
     if (v.plan) it.push({ title: 'Hekim değerlendirmesi ve plan', text: String(v.plan).split('\n'), textTitle: 'Plan' });
     return it;
   }
+  function trendItems(p) {
+    const ms = D.sortedMonths(p), cs = ms.map(a => D.compute(p, p.visits[a], a)), it = [];
+    it.push({ title: 'Hasta', inputs: [['Hasta kodu', p.kod || '—'], ['Yöntem', MODN[p.mod]], ['Dönem', ms.length ? ayAd(ms[0]) + ' – ' + ayAd(ms[ms.length - 1]) : '—']] });
+    const res = TREND[p.mod].map(t => { const vals = ms.map((a, i) => t[1](cs[i], k => D.val(p.mod, p.visits[a], k))); if (!vals.some(x => x != null)) return null; const son = vals.filter(x => x != null).pop();
+      return [t[0], fmt(son, t[2]), '', ms.map((a, i) => vals[i] == null ? null : ayKisa(a) + ' ' + fmt(vals[i], t[2])).filter(Boolean).join(' · ')]; }).filter(Boolean);
+    if (res.length) it.push({ title: 'Aylar arası seyir (son değer ve tüm aylar)', results: res });
+    ms.forEach(a => { const ev = D.evaluate(p, a), v = p.visits[a]; const pl = ev.plan.filter(r => r.yon !== 'devam' || (v.rx || {})[r.k]);
+      if (pl.length) it.push({ title: 'İlaç planı · ' + ayAd(a), results: pl.map(r => [r.l, r.oneri, (YON[r.yon] || YON.izle)[1], 'Şu an: ' + (r.simdi || '—') + '. ' + r.neden + ((v.rx || {})[r.k] ? ' Hekim kararı: ' + rxAd(v.rx[r.k]) + '.' : '')]) }); });
+    return it;
+  }
+  function exportTrend() { const p = cur.p; if (!p) return; const label = (p.kod || '') + ' · tüm aylar'; DA.open(trendItems(p), label); const el = $('#da-pt'); if (el) { el.value = label; el.dispatchEvent(new Event('input', { bubbles: true })); } }
+  function kpiItems(m, ay) {
+    const ps = byMod(m), act = ps.filter(p => p.visits[ay]), evs = act.map(p => ({ p, ev: D.evaluate(p, ay) })), it = [];
+    it.push({ title: 'Ünite göstergeleri', inputs: [['Yöntem', MODN[m]], ['Dönem', ayAd(ay)], ['Vizit kaydı olan hasta', String(act.length)]] });
+    it.push({ title: 'Hedefte olan hasta oranı', results: D.KPI[m].map(k => { let n = 0, ok = 0; evs.forEach(x => { const r = k[1](x.ev.c, kk => D.val(m, x.p.visits[ay], kk), x.p.visits[ay]); if (r != null) { n++; if (r) ok++; } }); return [k[0], n ? '%' + Math.round(ok / n * 100) : '—', '', ok + '/' + n + ' hasta']; }) });
+    const tk = act.map(p => ({ p, t: D.takvim(p, ay).filter(x => x.durum !== 'guncel') })).filter(x => x.t.length);
+    if (tk.length) it.push({ title: 'Zamanı gelen tetkikler', results: tk.map(x => [x.p.kod || '—', String(x.t.length), 'tetkik', x.t.map(t => t.l).join('; ')]) });
+    const rx = evs.map(x => ({ p: x.p, d: x.ev.plan.filter(r => r.set) })).filter(x => x.d.length);
+    if (rx.length) it.push({ title: 'Doz değişikliği önerilen hastalar', results: rx.map(x => [x.p.kod || '—', String(x.d.length), 'değişiklik', x.d.map(r => r.l + ': ' + r.oneri).join('; ')]) });
+    const pri = evs.map(x => ({ p: x.p, b: x.ev.recs.filter(r => r.s === 'bad') })).filter(x => x.b.length);
+    if (pri.length) it.push({ title: 'Öncelikli öneriler', results: pri.map(x => [x.p.kod || '—', String(x.b.length), 'öncelikli', x.b.map(r => r.k).join('; ')]) });
+    return it;
+  }
+  function exportKpi(m, ay) { const label = MODN[m] + ' ünite göstergeleri · ' + ayAd(ay); DA.open(kpiItems(m, ay), label); const el = $('#da-pt'); if (el) { el.value = label; el.dispatchEvent(new Event('input', { bubbles: true })); } }
   const karAd = k => k === 'e' ? 'Uygun bulundu' : k === 'h' ? 'Uygulanmadı' : '';
   const recLine = (r, v) => `[${LVL[r.s]}] ${r.k}${r.why ? ' (' + r.why + ')' : ''}: ${r.o} Dayanak: ${r.src}.${(v.kar || {})[r.id] ? ' Hekim kararı: ' + karAd(v.kar[r.id]) + '.' : ''}`;
   function exportPatient() { const p = cur.p, ay = cur.ay; if (!p || !ay) return; const label = (p.kod || '') + ' · ' + ayAd(ay); DA.open(patientItems(p, ay), label); const el = $('#da-pt'); if (el) { el.value = label; el.dispatchEvent(new Event('input', { bubbles: true })); } }
@@ -325,11 +365,16 @@
         rows.push([p.kod, a].concat(fs.map(f => f.t === 'n' ? (D.num(v[f.k]) == null ? '' : D.num(v[f.k])) : (v[f.k] == null ? '' : v[f.k])), DKEYS[m].map(k => ev.c[k[0]] == null ? '' : ev.c[k[0]]), [ev.recs.filter(r => r.s === 'bad').length, ev.recs.filter(r => r.s === 'warn').length, v.plan || '']));
         ev.recs.forEach(r => recRows.push([p.kod, m, a, r.id, D.GRP[r.g], LVL[r.s], r.k, r.why, r.o, r.src, karAd((v.kar || {})[r.id])])); }));
       sh.push({ name: m + ' vizitleri', head: 1, widths: [14, 10].concat(fs.map(() => 14), DKEYS[m].map(() => 14), [10, 8, 50]), rows }); });
+    const rxRows = [['Hasta kodu', 'Yöntem', 'Dönem', 'İlaç', 'Şu an', 'Öneri', 'Değişim', 'Gerekçe', 'Excel protokolünden farkı', 'Dayanak', 'Hekim kararı']], tkRows = [['Hasta kodu', 'Yöntem', 'Son vizit', 'Tetkik', 'Aralık (ay)', 'Son kayıt', 'Sonraki', 'Durum', 'Dayanak']];
+    S.patients.forEach(p => { const ms = D.sortedMonths(p); ms.forEach(a => { const v = p.visits[a]; D.ilacPlan(p, a).forEach(r => rxRows.push([p.kod, p.mod, a, r.l, r.simdi || '', r.oneri, (YON[r.yon] || YON.izle)[1], r.neden, r.fark || '', r.src || '', rxAd((v.rx || {})[r.k])])); });
+      const son = ms[ms.length - 1]; if (son) D.takvim(p, son).forEach(t => tkRows.push([p.kod, p.mod, son, t.l, t.i, t.son || '', t.sonraki || '', t.durum === 'guncel' ? 'Güncel' : t.durum === 'gecikti' ? 'Zamanı geldi' : 'Kayıt yok', t.src])); });
+    sh.push({ name: 'İlaç planları', head: 1, widths: [14, 8, 10, 24, 30, 34, 10, 70, 70, 40, 14], rows: rxRows });
+    sh.push({ name: 'Tetkik takvimi', head: 1, widths: [14, 8, 10, 40, 10, 10, 10, 14, 50], rows: tkRows });
     sh.push({ name: 'Öneriler', head: 1, widths: [14, 8, 10, 10, 22, 10, 40, 24, 80, 40, 16], rows: recRows });
     sh.push({ name: 'Bilgi', head: 0, widths: [22, 90], rows: [['Uygulama', 'Diyaliz Rehberi, sürüm ' + VER], ['Hazırlayan', AUT], ['Oluşturma', new Date().toLocaleString('tr-TR')], ['Uyarı', 'Klinik karar desteği amaçlıdır; hasta özelinde hekim değerlendirmesinin yerini tutmaz.'], ['Veri gizliliği', 'Dosya cihazda oluşturulmuştur. Kişisel sağlık verisi içerebilir; KVKK ve kurum kurallarına göre saklayın.']] });
     return sh;
   }
-  function ruleSheets() { return ['HD', 'PD'].map(m => ({ name: m + ' kuralları', head: 1, widths: [10, 24, 10, 44, 90, 44, 30], rows: [['Kod', 'Bölüm', 'Düzey', 'Koşul', 'Öneri', 'Dayanak', 'Yazar notu / onay']].concat(D.RULES[m].map(r => [r.id, D.GRP[r.g], LVL[r.s], r.k, ruleText(r), r.src, ''])) })); }
+  function ruleSheets() { return [{ name: 'İlaç planı algoritması', head: 1, widths: [24, 110, 70, 40], rows: [['İlaç', 'Algoritma', 'Excel protokolünden farkı', 'Dayanak']].concat(D.PLAN_DOC) }].concat(['HD', 'PD'].map(m => ({ name: m + ' kuralları', head: 1, widths: [10, 24, 10, 44, 90, 44, 30], rows: [['Kod', 'Bölüm', 'Düzey', 'Koşul', 'Öneri', 'Dayanak', 'Yazar notu / onay']].concat(D.RULES[m].map(r => [r.id, D.GRP[r.g], LVL[r.s], r.k, ruleText(r), r.src, ''])) }))); }
   function saveBytes(bytes, name, mime) { try { DA.save(bytes, name, mime).then(r => { if (r === 'saved') DA.toast(name + ' indirildi'); }); } catch (e) { DA.toast('Dosya oluşturulamadı'); } }
 
   /* ---------------- Örnek veri ---------------- */
@@ -362,6 +407,12 @@
     else if (act === 'addAy') { const a = ($('#newAy') || {}).value; if (!/^\d{4}-\d{2}$/.test(a || '')) { DA.toast('Geçerli bir ay seçin'); return; } if (!p.visits[a]) { newVisit(p, a); save(); } go('p/' + p.id + '/' + a); }
     else if (act === 'delAy') { if (!arm(b)) return; delete p.visits[ay]; save(); go('p/' + p.id); }
     else if (act === 'exp') exportPatient();
+    else if (act === 'rx' || act === 'rxAll') { const v = p && p.visits[ay]; if (!v) return; v.rx = v.rx || {};
+      if (act === 'rx') { const id = b.dataset.id, val = b.dataset.val; if (v.rx[id] === val) delete v.rx[id]; else v.rx[id] = val; }
+      else { const pl = D.ilacPlan(p, ay).filter(r => r.set); pl.forEach(r => { v.rx[r.k] = 'e'; }); DA.toast(pl.length ? pl.length + ' değişiklik onaylandı' : 'Onaylanacak doz değişikliği yok'); }
+      save(); refresh(); }
+    else if (act === 'expTrend') exportTrend();
+    else if (act === 'expKpi') exportKpi(b.dataset.mod, b.dataset.ay);
     else if (act === 'qreset') { delete TMP[b.dataset.mod]; go('hizli/' + b.dataset.mod); }
     else if (act === 'psave') { const m = b.dataset.mod, id = b.dataset.id; let q = id ? getP(id) : { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), mod: m, visits: {} };
       $$('#pform [data-pf]').forEach(el => { const k = el.dataset.pf, val = el.value.trim(); if (val === '') delete q[k]; else q[k] = val; });
