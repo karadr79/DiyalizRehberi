@@ -174,15 +174,23 @@
         { k: 'pet', l: 'PET: 4. saat D/P kreatinin', u: '', t: 'n', c: 1, mn: 0.2, mx: 1.1 },
         { k: 'petUF', l: 'PET: 4 saatlik net UF (%3,86)', u: 'mL', t: 'n', c: 1, mn: -1000, mx: 2000 }
       ] },
-      { id: 'rec', t: 'Diyaliz reçetesi', d: 'Reçete alanları yeni aya kendiliğinden taşınır. Solüsyonlar için günlük toplam hacmi girin.', f: [
+      { id: 'rec', t: 'Diyaliz reçetesi', d: 'Her solüsyon için torba hacmi, bekleme süresi ve günlük değişim sayısını girin; kullanılmayan solüsyonu boş bırakın. APD’de torba hacmi × torba sayısı girilir. Alanlar yeni aya taşınır.', f: [
         { k: 'tip', l: 'Yöntem', t: 's', c: 1, o: ['SAPD', 'APD'] },
-        { k: 'dolum', l: 'Dolum volümü', u: 'L', t: 'n', c: 1, mn: 0.5, mx: 3.5 },
-        { k: 'degisim', l: 'Günlük değişim / döngü sayısı', u: '/gün', t: 'n', c: 1, mn: 1, mx: 12 },
-        { k: 's136', l: '%1,36 glukoz', u: 'L/gün', t: 'n', c: 1, mn: 0, mx: 25 },
-        { k: 's227', l: '%2,27 glukoz', u: 'L/gün', t: 'n', c: 1, mn: 0, mx: 25 },
-        { k: 's386', l: '%3,86 glukoz', u: 'L/gün', t: 'n', c: 1, mn: 0, mx: 25 },
-        { k: 'iko', l: 'İkodekstrin', u: 'L/gün', t: 'n', c: 1, mn: 0, mx: 5 },
-        { k: 'aa', l: 'Aminoasit solüsyonu', u: 'L/gün', t: 'n', c: 1, mn: 0, mx: 5 },
+        { k: 's136V', l: '%1,36 glukoz: torba hacmi', u: 'L', t: 'n', c: 1, mn: 0.5, mx: 6, h: 'Excel: 2L-3H-3D = 2 L, 3 saat, 3 değişim' },
+        { k: 's136H', l: '%1,36 glukoz: bekleme', u: 'saat', t: 'n', c: 1, mn: 0.5, mx: 16 },
+        { k: 's136N', l: '%1,36 glukoz: değişim', u: 'adet/gün', t: 'n', c: 1, mn: 0, mx: 10 },
+        { k: 's227V', l: '%2,27 glukoz: torba hacmi', u: 'L', t: 'n', c: 1, mn: 0.5, mx: 6 },
+        { k: 's227H', l: '%2,27 glukoz: bekleme', u: 'saat', t: 'n', c: 1, mn: 0.5, mx: 16 },
+        { k: 's227N', l: '%2,27 glukoz: değişim', u: 'adet/gün', t: 'n', c: 1, mn: 0, mx: 10 },
+        { k: 's386V', l: '%3,86 glukoz: torba hacmi', u: 'L', t: 'n', c: 1, mn: 0.5, mx: 6 },
+        { k: 's386H', l: '%3,86 glukoz: bekleme', u: 'saat', t: 'n', c: 1, mn: 0.5, mx: 16 },
+        { k: 's386N', l: '%3,86 glukoz: değişim', u: 'adet/gün', t: 'n', c: 1, mn: 0, mx: 10 },
+        { k: 'sikoV', l: 'İkodekstrin: torba hacmi', u: 'L', t: 'n', c: 1, mn: 0.5, mx: 6 },
+        { k: 'sikoH', l: 'İkodekstrin: bekleme', u: 'saat', t: 'n', c: 1, mn: 0.5, mx: 16 },
+        { k: 'sikoN', l: 'İkodekstrin: değişim', u: 'adet/gün', t: 'n', c: 1, mn: 0, mx: 10 },
+        { k: 'saaV', l: 'Aminoasit: torba hacmi', u: 'L', t: 'n', c: 1, mn: 0.5, mx: 6 },
+        { k: 'saaH', l: 'Aminoasit: bekleme', u: 'saat', t: 'n', c: 1, mn: 0.5, mx: 16 },
+        { k: 'saaN', l: 'Aminoasit: değişim', u: 'adet/gün', t: 'n', c: 1, mn: 0, mx: 10 },
         { k: 'gunduz', l: 'Gündüz dolumu (APD)', u: 'L', t: 'n', c: 1, mn: 0, mx: 3.5 },
         { k: 'gece', l: 'Gece tedavi süresi (APD)', u: 'saat', t: 'n', c: 1, mn: 4, mx: 14 }
       ] },
@@ -258,7 +266,15 @@
       var cu = uV != null && uV > 0 && uU != null && pU ? uU / pU * uV / 1440 : (uV === 0 ? 0 : null), cc = uV != null && uV > 0 && uK != null && pK ? uK / pK * uV / 1440 : (uV === 0 ? 0 : null);
       if (cu != null && cc != null) { var rk = (cu + cc) / 2; c.rkfRaw = rk; c.rkf = c.bsa ? r1(rk * 1.73 / c.bsa) : r1(rk); }
       if (dV != null && dK != null && pK && c.bsa) { var per = dK / pK * dV * 7; c.pCrCl = r1(per * 1.73 / c.bsa); if (c.rkfRaw != null) c.tCrCl = r1((per + c.rkfRaw * 10.08) * 1.73 / c.bsa); }
-      var a = g('s136'), b = g('s227'), d = g('s386'), ik = g('iko'), aa = g('aa');
+      /* Solüsyon başına günlük hacim = torba hacmi × değişim sayısı; eski kayıtlarda doğrudan L/gün değeri okunur */
+      c.L = {}; c.recete = []; c.degisim = 0; var anySol = false;
+      [['136', '%1,36'], ['227', '%2,27'], ['386', '%3,86'], ['iko', 'İkodekstrin'], ['aa', 'Aminoasit']].forEach(function (q) {
+        var V = g('s' + q[0] + 'V'), N = g('s' + q[0] + 'N'), H = g('s' + q[0] + 'H'), leg = num(v[q[0] === 'iko' || q[0] === 'aa' ? q[0] : 's' + q[0]]);
+        var L = V != null && N != null ? V * N : (leg != null ? leg : null); c.L[q[0]] = L; if (L != null) anySol = true;
+        if (N != null && N > 0) { c.degisim += N; c.recete.push(q[1] + ': ' + (V != null ? tr(V, 1) + ' L' : '? L') + (H != null ? ' – ' + tr(H, 1) + ' sa' : '') + ' – ' + N + ' değişim'); }
+      });
+      c.recete = c.recete.join(' · ') || null; if (!c.degisim) c.degisim = null;
+      var a = c.L['136'], b = c.L['227'], d = c.L['386'], ik = c.L.iko, aa = c.L.aa;
       if (a != null || b != null || d != null) { c.gluk = Math.round((a || 0) * 13.6 + (b || 0) * 22.7 + (d || 0) * 38.6); c.glukVol = (a || 0) + (b || 0) + (d || 0); c.hiper = ((b || 0) + (d || 0)); }
       if (a != null || b != null || d != null || ik != null || aa != null) c.topVol = r1((a || 0) + (b || 0) + (d || 0) + (ik || 0) + (aa || 0));
       var uf = g('uf'); if (uf != null && uV != null) c.cikis = uf + uV;
@@ -390,11 +406,11 @@
       { id: 'PD-Y09', g: 'yet', s: 'info', k: 'Son 6 ayda yeterlilik ölçümü yok', src: KDOQI06 + '; ' + ISPD20, w: function (x) { return x.c.ktv == null && x.any && !x.recent('ktv', 6); },
         o: 'Klirens ve rezidüel böbrek fonksiyonunun düzenli aralıklarla (en az 6 ayda bir; klinik değişiklikte daha erken) ölçülmesi önerilir.' },
 
-      { id: 'PD-R01', g: 'rec', s: 'warn', k: '%3,86 glukoz düzenli kullanılıyor veya glukozlu hacmin ≥ yarısı hipertonik', src: 'ISPD 2015 (kardiyovasküler ve metabolik)', w: function (x) { var d = x.n('s386'); return ((d != null && d > 0) || (x.c.glukVol > 0 && x.c.hiper / x.c.glukVol >= 0.5)) && 'glukoz yükü ' + x.c.gluk + ' g/gün'; },
+      { id: 'PD-R01', g: 'rec', s: 'warn', k: '%3,86 glukoz düzenli kullanılıyor veya glukozlu hacmin ≥ yarısı hipertonik', src: 'ISPD 2015 (kardiyovasküler ve metabolik)', w: function (x) { var d = x.c.L['386']; return ((d != null && d > 0) || (x.c.glukVol > 0 && x.c.hiper / x.c.glukVol >= 0.5)) && 'glukoz yükü ' + x.c.gluk + ' g/gün'; },
         o: 'Periton glukoz maruziyetinin azaltılması önerilir: tuz kısıtlaması, rezidüel fonksiyon varsa loop diüretik, uzun beklemede ikodekstrin ve bekleme sürelerinin transport tipine uyarlanması ile hipertonik solüsyon gereksinimi azaltılabilir.' },
-      { id: 'PD-R02', g: 'rec', s: 'info', k: 'İkodekstrin yok; hızlı/yüksek-orta transport, ödem veya düşük UF var', src: 'ISPD 2015 (kardiyovasküler ve metabolik), 2.2', w: function (x) { var ik = x.n('iko'), p = x.n('pet'), u = x.n('uf'), od = x.v.odem && x.v.odem !== 'Yok'; if (ik == null || ik > 0) return false; var r = []; if (p != null && p >= 0.65) r.push('D/P ' + tr(p, 2)); if (od) r.push('ödem'); if (u != null && u < 500) r.push('UF ' + u + ' mL/gün'); return r.length ? r.join(', ') : false; },
+      { id: 'PD-R02', g: 'rec', s: 'info', k: 'İkodekstrin yok; hızlı/yüksek-orta transport, ödem veya düşük UF var', src: 'ISPD 2015 (kardiyovasküler ve metabolik), 2.2', w: function (x) { var ik = x.c.L.iko, p = x.n('pet'), u = x.n('uf'), od = x.v.odem && x.v.odem !== 'Yok'; if (ik == null || ik > 0) return false; var r = []; if (p != null && p >= 0.65) r.push('D/P ' + tr(p, 2)); if (od) r.push('ödem'); if (u != null && u < 500) r.push('UF ' + u + ' mL/gün'); return r.length ? r.join(', ') : false; },
         o: 'Uzun bekleme süreli değişimde günde bir kez ikodekstrin kullanımı ultrafiltrasyonu artırır ve glukoz maruziyetini azaltır; değerlendirilmesi önerilir.' },
-      { id: 'PD-R03', g: 'rec', s: 'warn', k: 'İkodekstrin > 2,5 L/gün', src: 'Ürün bilgisi', w: function (x) { var ik = x.n('iko'); return ik != null && ik > 2.5 && tr(ik, 1) + ' L/gün'; }, o: 'İkodekstrin günde tek değişim olarak onaylıdır; reçetenin gözden geçirilmesi önerilir.' },
+      { id: 'PD-R03', g: 'rec', s: 'warn', k: 'İkodekstrin günde birden fazla değişim veya > 2,5 L/gün', src: 'Ürün bilgisi', w: function (x) { var ik = x.c.L.iko, n = x.n('sikoN'); return ((n != null && n > 1) || (ik != null && ik > 2.5)) && (n != null ? n + ' değişim, ' : '') + tr(ik, 1) + ' L/gün'; }, o: 'İkodekstrin günde tek değişim olarak onaylıdır; reçetenin gözden geçirilmesi önerilir.' },
       { id: 'PD-R04', g: 'kab', s: 'warn', k: 'Serum K < 3,5 mmol/L', src: 'ISPD Peritonit 2022; ' + ISPD20, w: function (x) { var k = x.n('k'); return k != null && k < 3.5 && 'K ' + tr(k, 1); },
         o: 'PD’de hipopotasemi sıktır ve peritonit ile mortalite riskiyle ilişkilidir. Beslenmenin değerlendirilmesi, potasyumdan zengin diyet veya oral potasyum, uygun hastada mineralokortikoid reseptör antagonisti değerlendirilebilir.' },
       { id: 'PD-R05', g: 'kab', s: 'warn', k: 'Serum K > 5,5 mmol/L', src: ISPD20, w: function (x) { var k = x.n('k'); return k != null && k > 5.5 && 'K ' + tr(k, 1); },
@@ -630,7 +646,7 @@
       { id: P + 'N08', g: 'nut', s: 'info', k: 'MIS 6–7', src: 'Nutrition in Kidney Disease', w: function (x) { var m = x.n('mis'); return m != null && m >= 6 && m < 8 && 'MIS ' + m; }, o: 'MIS 5–8 üzerindeki değerler artmış klinik riskle ilişkilidir; 3 ay içinde yinelenmesi ve diyet alımının değerlendirilmesi önerilir.' },
       { id: P + 'N09', g: 'nut', s: 'warn', k: 'Oral nutrisyonel destek yok; albümin < 3,8 ve yetersiz alım', src: 'Nutrition in Kidney Disease; CDT Nephrology & Hypertension; Oxford Handbook of Dialysis', w: function (x) { var a = x.n('alb'), n = x.n('npcr'), pa = x.n('protAlim'), ea = x.n('enerjiAlim'); var low = (n != null && n < 1) || (pa != null && pa < (pd ? 1.2 : 1.2)) || (ea != null && ea < 30) || x.v.istah === 'Azalmış'; return (!x.v.ons || x.v.ons === 'Yok') && a != null && a < 3.8 && low && 'albümin ' + tr(a, 1); },
         o: 'Diyet danışmanlığına rağmen hedeflere ulaşılamayan hastada böbreğe özgü (düşük potasyum ve fosforlu) oral nutrisyonel destek önerilir; ' + (pd ? 'günlük ek öğün olarak' : 'diyaliz seansı sırasında veya günlük ek öğün olarak') + ' verilebilir.' },
-      pd ? { id: P + 'N10', g: 'nut', s: 'warn', k: 'Ağır PEW: albümin < 3,0 g/dL, aminoasit solüsyonu yok', src: 'Nutrition in Kidney Disease; Oxford Handbook of Dialysis', w: function (x) { var a = x.n('alb'), aa = x.n('aa'); return a != null && a < 3 && (aa == null || aa === 0) && 'albümin ' + tr(a, 1); },
+      pd ? { id: P + 'N10', g: 'nut', s: 'warn', k: 'Ağır PEW: albümin < 3,0 g/dL, aminoasit solüsyonu yok', src: 'Nutrition in Kidney Disease; Oxford Handbook of Dialysis', w: function (x) { var a = x.n('alb'), aa = x.c.L ? x.c.L.aa : null; return a != null && a < 3 && (aa == null || aa === 0) && 'albümin ' + tr(a, 1); },
           o: 'Oral yolla yeterli alım sağlanamayan ağır PEW’de günlük değişimlerden 1–2’sinin %1,1 aminoasit solüsyonuyla yapılması (intraperitoneal beslenme) değerlendirilebilir.' }
          : { id: P + 'N10', g: 'nut', s: 'warn', k: 'Oral destekle yetersiz yanıt ve ağır PEW bulgusu, IDPN yok', src: 'Nutrition in Kidney Disease; CDT Nephrology & Hypertension', w: function (x) { var a = x.n('alb'), n = x.n('npcr'), r = []; if (a != null && a < 3.5) r.push('albümin ' + tr(a, 1)); if (n != null && n < 0.8) r.push('nPCR ' + tr(n, 2)); if (x.c.wl6 != null && x.c.wl6 > 10) r.push('6 ayda %' + tr(x.c.wl6, 1) + ' kilo kaybı'); return x.v.ons === 'Var' && (!x.v.idpn || x.v.idpn === 'Yok') && r.length && r.join(', '); },
           o: 'Oral destek yetersiz kaldıysa veya kullanılamıyorsa intradiyalitik parenteral beslenme değerlendirilebilir. IDPN günlük beslenmenin yerini almaz; hastanın gereksiniminin en az yarısını ağızdan karşılayabilmesi gerekir.' },
@@ -693,7 +709,8 @@
       add('yet', 'Haftalık kreatinin klirensi', c.tCrCl != null ? c.tCrCl : c.pCrCl, 'L/1,73 m²', 1, c.tCrCl != null ? 'periton + renal' : 'yalnız periton');
       add('yet', 'Rezidüel böbrek fonksiyonu', c.rkf, 'mL/dk/1,73 m²', 1, 'üre ve kreatinin klirensi ortalaması'); add('yet', 'PET transport tipi', c.petTip, '', null);
       add('yet', 'Üre dağılım hacmi (Watson)', c.V, 'L', 1); add('yet', 'Vücut yüzey alanı (DuBois)', c.bsa, 'm²', 2);
-      add('rec', 'Günlük toplam solüsyon', c.topVol, 'L/gün', 1); add('rec', 'Günlük glukoz yükü', c.gluk, 'g/gün', 0, 'torbadaki glukoz; emilen miktar daha düşüktür');
+      add('rec', 'Reçete özeti', c.recete, '', null); add('rec', 'Günlük değişim sayısı', c.degisim, 'adet', 0);
+      add('rec', 'Günlük toplam solüsyon', c.topVol, 'L/gün', 1, 'torba hacmi × değişim sayısı'); add('rec', 'Günlük glukoz yükü', c.gluk, 'g/gün', 0, 'torbadaki glukoz; emilen miktar daha düşüktür');
       add('vol', 'Toplam sıvı çıkışı (idrar + UF)', c.cikis, 'mL/gün', 0); add('vol', 'Ağırlık − hedef', c.dHedef, 'kg', 1);
       ANEMKB(add, c);
     }
@@ -710,7 +727,7 @@
       ['Kilo alımı ≤ %4,5', function (c) { return c.idwg == null ? null : c.idwg <= 4.5; }], ['Giriş sistolik KB < 160', function (c, n) { return n('preS') == null ? null : n('preS') < 160; }], ['İntradiyalitik hipotansiyon yok', function (c, n) { return n('idh') == null ? null : n('idh') === 0; }],
       ['Giriş K 4,0–5,5', function (c, n) { return n('k') == null ? null : n('k') >= 4 && n('k') <= 5.5; }], ['Giriş HCO₃ ≥ 22', function (c, n) { return n('hco3') == null ? null : n('hco3') >= 22; }], ['Kalıcı erişim (fistül/greft)', function (c, n, v) { return !v.erisim ? null : /AV/.test(v.erisim); }]].concat(KPI_ORT),
     PD: [['Haftalık Kt/V ≥ 1,7', function (c) { return c.ktv == null ? null : c.ktv >= 1.7; }], ['KB < 140/90', function (c, n) { return n('S') == null ? null : n('S') < 140 && (n('D') == null || n('D') < 90); }], ['Ödem yok', function (c, n, v) { return !v.odem ? null : v.odem === 'Yok'; }],
-      ['Toplam sıvı çıkışı ≥ 1000 mL/gün', function (c) { return c.cikis == null ? null : c.cikis >= 1000; }], ['Serum K 3,5–5,5', function (c, n) { return n('k') == null ? null : n('k') >= 3.5 && n('k') <= 5.5; }], ['Hipertonik (%3,86) kullanılmıyor', function (c, n) { return n('s386') == null ? null : n('s386') === 0; }],
+      ['Toplam sıvı çıkışı ≥ 1000 mL/gün', function (c) { return c.cikis == null ? null : c.cikis >= 1000; }], ['Serum K 3,5–5,5', function (c, n) { return n('k') == null ? null : n('k') >= 3.5 && n('k') <= 5.5; }], ['Hipertonik (%3,86) kullanılmıyor', function (c) { return !c.L || c.L['386'] == null ? (c.recete ? true : null) : c.L['386'] === 0; }],
       ['Serum HCO₃ ≥ 22', function (c, n) { return n('hco3') == null ? null : n('hco3') >= 22; }], ['İdrar ≥ 100 mL/gün (rezidüel fonksiyon)', function (c, n) { return n('idrar') == null ? null : n('idrar') >= 100; }]].concat(KPI_ORT)
   };
   root.DR = { takvim: takvim, SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
