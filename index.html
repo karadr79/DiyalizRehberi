@@ -168,6 +168,60 @@ mark{background:var(--draft-soft);color:inherit;padding:0 2px;border-radius:2px}
 }
 @media (prefers-reduced-motion:reduce){.side{transition:none}}
 @media print{.side,.top,.noprint{display:none!important}.app{display:block}main{padding:0}}
+/* ---------- Hareket: içerik animasyonları ---------- */
+.brand .rt-logo,.top .rt-logo{transition:transform .35s cubic-bezier(.2,1.4,.4,1),filter .3s ease;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.rec2{transition:border-color .22s ease,box-shadow .28s ease,transform .18s ease}
+.tabs button{transition:color .2s ease,border-color .25s ease,background-color .2s ease}
+@media (prefers-reduced-motion:no-preference){
+ .brand:hover .rt-logo{transform:translateY(-2px) rotate(-4deg)}
+ /* dokunulan kart: çerçeve önem rengine döner ve belirginleşir */
+ .rec2:hover{box-shadow:0 6px 20px -14px var(--sev,var(--accent))}
+ .rec2:active{transform:scale(.99);box-shadow:0 0 0 3px color-mix(in srgb,var(--sev,var(--accent)) 30%,transparent)}
+ .rec2.bad{--sev:var(--bad)} .rec2.warn{--sev:var(--warn)} .rec2.info{--sev:var(--info)} .rec2.ok{--sev:var(--ok)}
+ .rec2:hover,.rec2:active{border-color:color-mix(in srgb,var(--sev,var(--accent)) 55%,var(--line))}
+ .modcard:active,.mod:active{border-top-color:var(--accent)}
+ /* öneri kartları: sayfa açılışında sırayla; yeni ortaya çıkan öneri vurguyla */
+ .rt-in .rec2,.tab-in .rec2{animation:recIn .46s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*45ms + .12s)}
+ @keyframes recIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+ .rec2.rec-new{animation:recNew 1.5s cubic-bezier(.2,.8,.2,1) both}
+ @keyframes recNew{0%{opacity:0;transform:translateY(-6px) scale(.98);box-shadow:0 0 0 0 transparent}
+  18%{opacity:1;transform:none;box-shadow:0 0 0 6px color-mix(in srgb,var(--sev,var(--accent)) 30%,transparent)}
+  100%{box-shadow:0 0 0 0 transparent}}
+ .rec2{position:relative}
+ .rec2.rec-new>.hd .pill{animation:rtPop .5s .1s cubic-bezier(.2,1.6,.4,1) both}
+ /* hesaplanan değer değişince kutu ve sayı canlanır */
+ .kv div.dv-pop{animation:dvBox 1.1s ease-out}
+ .kv div.dv-pop strong{display:inline-block;animation:dvNum .5s cubic-bezier(.2,1.5,.4,1)}
+ @keyframes dvBox{0%,30%{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--bg))}100%{}}
+ @keyframes dvNum{0%{transform:scale(.88);color:var(--accent)}55%{transform:scale(1.08);color:var(--accent)}100%{transform:none}}
+ .rec2.dv-pop{animation:recUpd .9s ease-out}
+ @keyframes recUpd{0%,25%{box-shadow:0 0 0 3px color-mix(in srgb,var(--sev,var(--accent)) 28%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+ .kv div.dv-new{animation:rtUp .42s cubic-bezier(.2,.8,.2,1) both}
+ .rt-in .kv>div,.tab-in .kv>div{animation:rtUp .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*30ms + .1s)}
+ /* sekme ve ay geçişi: yalnız alt içerik kayarak gelir */
+ .tab-in{animation:tabIn .38s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*40ms)}
+ @keyframes tabIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+ .tabs button[aria-selected="true"]{animation:tabInk .35s ease-out}
+ @keyframes tabInk{from{border-bottom-color:transparent}}
+ /* ana sayfa ve hasta listesi kartları sırayla */
+ .rt-in .grid>*{animation:rtUp .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*35ms + .08s)}
+ /* eğilim çizgileri çizilir, son nokta belirir */
+ .spark polyline{stroke-dasharray:1;stroke-dashoffset:1;animation:sparkDraw .9s .15s cubic-bezier(.4,0,.2,1) forwards}
+ .spark circle{transform-box:fill-box;transform-origin:center;animation:rtPop .4s 1s cubic-bezier(.2,1.6,.4,1) both}
+ @keyframes sparkDraw{to{stroke-dashoffset:0}}
+ /* gösterge çubukları dolar */
+ .bar i{transform-origin:left center;animation:barGrow .8s .15s cubic-bezier(.2,.8,.2,1) both}
+ @keyframes barGrow{from{transform:scaleX(0)}}
+ /* tetkik takvimi: geciken / kaydı olmayan tetkik bir kez dikkat çeker */
+ .rt-in .pill.bad,.tab-in .pill.bad{animation:pillPulse 1.6s .4s ease-out 1}
+ @keyframes pillPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--bad) 45%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+ /* aralık dışı giriş: alan bir kez sarsılır */
+ .f.err input{animation:errShake .32s ease}
+ @keyframes errShake{20%{transform:translateX(-4px)}45%{transform:translateX(4px)}70%{transform:translateX(-2px)}100%{transform:none}}
+ /* yönetmelik maddesi açılırken başlık vurgusu */
+ details.md[open]>summary{color:var(--accent)}
+ details.md>summary{transition:color .25s ease}
+}
 </style>
 </head>
 <body>

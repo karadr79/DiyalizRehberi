@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.6.1', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.7', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -29,7 +29,31 @@
     const act = cur.route.startsWith('p/') ? 'list/' + ((getP(cur.route.split('/')[1]) || {}).mod || '') : cur.route.startsWith('yeni/') ? 'list/' + cur.route.split('/')[1] : cur.route;
     $('#navlist').innerHTML = NAV.map(g => `<div class="navgroup">${g[0] ? `<div class="navlabel"><i style="background:var(--${g[2] || 'nav-dim'})"></i>${g[0]}</div>` : ''}${g[1].map(n => `<button class="navbtn" data-go="${n[0]}" ${act === n[0] ? 'aria-current="page"' : ''}>${n[1]}${n[0].startsWith('list/') ? `<span class="yr">${byMod(n[0].slice(5)).length}</span>` : ''}</button>`).join('')}</div>`).join('');
   }
+  /* ---------------- Hareket: giriş, yeni öneri, değişen değer ---------------- */
+  let prevRoute = 'home', seen = null;
+  const RM = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  function animIn(v, sekme) {
+    if (RM()) return;
+    const tb = sekme && v.querySelector('.tabs');
+    if (tb) { let el = tb.nextElementSibling, i = 0; while (el) { el.style.setProperty('--i', i++); el.classList.remove('tab-in'); void el.offsetWidth; el.classList.add('tab-in'); el = el.nextElementSibling; } }
+    else if (window.RTEU) RTEU.enter(v);
+    v.querySelectorAll('.grid,.kv,.recs').forEach(g => [...g.children].forEach((c, i) => c.style.setProperty('--i', Math.min(i, 12))));
+    v.querySelectorAll('.rec2').forEach((c, i) => c.style.setProperty('--i', Math.min(i, 10)));
+    clearTimeout(animIn.t); animIn.t = setTimeout(() => { v.classList.remove('rt-in'); v.querySelectorAll('.tab-in').forEach(e => e.classList.remove('tab-in')); }, 2100);
+  }
+  /* Anahtarlı güncelleme: değişmeyen öğe korunur (animasyon kesilmez, odak ve kaydırma bozulmaz) */
+  function patch(box, items, fx, anim) {
+    const old = new Map([...box.children].filter(e => e.dataset.key).map(e => [e.dataset.key, e])), tpl = document.createElement('template'), out = [];
+    items.forEach(([k, h]) => { let el = old.get(k);
+      if (el && el.dataset.h === h) { out.push(el); return; }
+      tpl.innerHTML = h.trim(); const n = tpl.content.firstElementChild; n.dataset.key = k; n.dataset.h = h;
+      if (el && el.className.includes('rec-new')) n.classList.add('rec-new');
+      out.push(n); if (anim) fx(n, !el); });
+    box.replaceChildren(...out);
+  }
+  function pop(el, cls) { if (!el || RM()) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
   function go(route, keepScroll) {
+    if (cur.route !== (route || 'home')) prevRoute = cur.route;
     cur.route = route || 'home';
     try { history.replaceState(null, '', '#' + cur.route); } catch (e) { }
     const a = cur.route.split('/'), v = $('#view'); let h, mod = null;
@@ -44,8 +68,12 @@
     else if (a[0] === 'hakkinda') h = viewAbout();
     else h = viewHome();
     if (mod) v.setAttribute('data-mod', mod); else v.removeAttribute('data-mod');
+    const base = r => r.split('/').slice(0, 2).join('/'), ayni = a[0] === 'p' && base(prevRoute) === base(cur.route);
     v.innerHTML = h; renderNav(); $('#side').classList.remove('open');
+    seen = null;
     if (a[0] === 'p' || a[0] === 'hizli') refresh();
+    if (!keepScroll) animIn(v, ayni);
+    prevRoute = cur.route;
     if (!keepScroll) window.scrollTo(0, 0);
   }
 
@@ -68,7 +96,7 @@
     const pts = vals.map((v, i) => [i, v]).filter(x => x[1] != null); if (pts.length < 2) return '';
     const mn = Math.min(...pts.map(x => x[1])), mx = Math.max(...pts.map(x => x[1])), n = vals.length - 1 || 1, X = i => 3 + i / n * (w - 6), Y = v => mx === mn ? h / 2 : h - 4 - (v - mn) / (mx - mn) * (h - 8);
     const last = pts[pts.length - 1];
-    return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(x => X(x[0]).toFixed(1) + ',' + Y(x[1]).toFixed(1)).join(' ')}"/><circle cx="${X(last[0]).toFixed(1)}" cy="${Y(last[1]).toFixed(1)}" r="2.6" fill="var(--accent)"/></svg>`;
+    return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline pathLength="1" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(x => X(x[0]).toFixed(1) + ',' + Y(x[1]).toFixed(1)).join(' ')}"/><circle cx="${X(last[0]).toFixed(1)}" cy="${Y(last[1]).toFixed(1)}" r="2.6" fill="var(--accent)"/></svg>`;
   }
 
   /* ---------------- Ana sayfa ---------------- */
@@ -150,13 +178,16 @@
     const p = cur.p, ay = cur.ay; if (!p || !ay || !p.visits[ay] || !$('#sum')) return;
     const v = p.visits[ay], ev = D.evaluate(p, ay), der = D.derived(p, ev.c), fm = D.fieldMap(p.mod);
     ['yet', 'rec', 'vol', 'kab', 'ane', 'mkb', 'nut', 'eri', 'enf', 'lab', 'mev'].forEach(g => {
-      const o = $('#out-' + g); if (o) { const d = der.filter(x => x.g === g); o.innerHTML = d.map(x => `<div${typeof x.v === 'string' && x.v.length > 24 ? ' class="kvw"' : ''}><small>${esc(x.l)}</small><strong>${fmt(x.v, x.d)}</strong> ${esc(x.u)}${x.note ? `<em>${esc(x.note)}</em>` : ''}</div>`).join(''); o.hidden = !d.length; }
-      const r = $('#rec-' + g); if (r) { const rs = ev.recs.filter(x => x.g === g); r.innerHTML = rs.map(x => recHTML(x, v, !p.temp)).join('') || (g === 'mev' ? '<p class="cap">Bu ay için mevzuat hatırlatması yok.</p>' : ''); }
+      const o = $('#out-' + g); if (o) { const d = der.filter(x => x.g === g); patch(o, d.map(x => [g + '|' + x.l, `<div${typeof x.v === 'string' && x.v.length > 24 ? ' class="kvw"' : ''}><small>${esc(x.l)}</small><strong>${fmt(x.v, x.d)}</strong> ${esc(x.u)}${x.note ? `<em>${esc(x.note)}</em>` : ''}</div>`]), (el, yeni) => pop(el, yeni ? 'dv-new' : 'dv-pop'), !!seen); o.hidden = !d.length; }
+      const r = $('#rec-' + g); if (r) { const rs = ev.recs.filter(x => x.g === g); if (!rs.length) { r.innerHTML = g === 'mev' ? '<p class="cap">Bu ay için mevzuat hatırlatması yok.</p>' : ''; } else { if (r.querySelector(':scope > p.cap')) r.innerHTML = ''; patch(r, rs.map(x => [x.id, recHTML(x, v, !p.temp)]), (el, yeni) => { if (yeni && seen && !seen.has(el.dataset.key)) pop(el, 'rec-new'); else if (!yeni) pop(el, 'dv-pop'); }, !!seen); } }
     });
     const bad = new Set(ev.range.map(f => f.k));
     $$('#view .f[data-f]').forEach(el => { const k = el.dataset.f, f = fm[k], sm = el.querySelector('small'); if (!f || !sm || !el.querySelector('[data-k]')) return; const e = bad.has(k); el.classList.toggle('err', e); sm.textContent = e ? `Beklenen aralık ${D.tr(f.mn)}–${D.tr(f.mx)}; hesaba alınmadı` : sm.dataset.h; });
+    const ilk = !seen; seen = new Set(ev.recs.map(r => r.id));
     const n = s => ev.recs.filter(r => r.s === s).length;
+    const sumOld = $('#sum').textContent;
     $('#sum').innerHTML = ev.any ? [['bad', n('bad')], ['warn', n('warn')], ['info', n('info')], ['ok', n('ok')]].filter(x => x[1]).map(x => `<span class="pill ${x[0]}">${x[1]} ${LVL[x[0]].toLocaleLowerCase('tr')}</span>`).join('') + (ev.prev ? `<span class="cap">Karşılaştırma: ${ayAd(ev.prev)}</span>` : '') : '<span class="cap">Değer girdikçe hesaplar ve öneriler burada ve ilgili bölümün altında görünür.</span>';
+    if (!ilk && $('#sum').textContent !== sumOld) $$('#sum .pill').forEach(x => pop(x, 'rt-pop'));
   }
   const TR_ORT = [['Hemoglobin (g/dL)', (c, n) => n('hb'), 1], ['Ferritin (ng/mL)', (c, n) => n('ferritin'), 0], ['TSAT (%)', (c, n) => n('tsat'), 0], ['ESA dozu', (c, n) => n('esaDoz'), 0], ['ERI', c => c.eri, 1], ['Fosfor (mg/dL)', (c, n) => n('p'), 1], ['Düzeltilmiş Ca (mg/dL)', c => c.dca, 2], ['iPTH (pg/mL)', (c, n) => n('pth'), 0], ['iPTH / üst sınır', c => c.pthX, 1], ['nPCR (g/kg/gün)', (c, n) => n('npcr'), 2], ['BMI (kg/m²)', c => c.bmi, 1], ['GNRI', c => c.gnri, 1], ['MIS', (c, n) => n('mis'), 0], ['PEW kategori sayısı', c => c.pewN, 0]];
   const TREND = {
@@ -364,7 +395,7 @@
   /* ---------------- Başlat ---------------- */
   load();
   if (window.DA) DA.config({ app: 'Diyaliz Rehberi', file: 'DiyalizRehberi', color: '#4FB3BE', noFab: true, kind: 'Aylık vizit özeti', org: AUT + ' · ', org2: AUT, directTitle: 'Aylık vizit özeti', patientTitle: 'Hasta', footer: 'Klinik karar desteği amaçlıdır; hasta özelinde hekim değerlendirmesinin yerini tutmaz. Dosya cihazda oluşturulmuştur.' });
-  if (window.RTEU) RTEU.init({ key: 'diyaliz', version: VER, date: VDATE, tools: '.sidefoot', view: '#view', rem: true, press: '.mod,.btn,.navbtn', cards: '.calc', reset: false, enter: false });
+  if (window.RTEU) RTEU.init({ key: 'diyaliz', version: VER, date: VDATE, tools: '.sidefoot', view: '#view', rem: true, press: '.mod,.btn,.navbtn,.modcard', cards: '.calc,.modcard', reset: false, enter: false });
   window.addEventListener('hashchange', () => { const h = (location.hash || '').replace('#', ''); if (h && h !== cur.route) go(h); });
   go((location.hash || '').replace('#', '') || 'home');
   if ('serviceWorker' in navigator && location.protocol === 'https:') { navigator.serviceWorker.register('sw.js').catch(() => { }); }

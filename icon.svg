@@ -1,1 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a8a96"/><stop offset="1" stop-color="#0c2a31"/></linearGradient><radialGradient id="h" cx="0.22" cy="0.08" r="0.85"><stop offset="0" stop-color="#fff" stop-opacity="0.4"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5fbfb"/><stop offset="1" stop-color="#cfe6e8"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><rect width="512" height="512" rx="112" fill="url(#h)"/><rect x="5" y="5" width="502" height="502" rx="108" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="4"/><g><rect x="206" y="96" width="100" height="320" rx="30" fill="url(#f)"/><rect x="206" y="96" width="100" height="56" rx="26" fill="#c4554a"/><rect x="206" y="360" width="100" height="56" rx="26" fill="#3f6fb5"/><g stroke="#7fb3b9" stroke-width="5" stroke-linecap="round"><path d="M232 176v160M256 176v160M280 176v160"/></g><path d="M256 96V62" stroke="#f2b8b1" stroke-width="20" stroke-linecap="round"/><path d="M256 416v34" stroke="#a9c3ea" stroke-width="20" stroke-linecap="round"/><path d="M306 186h52v-44" fill="none" stroke="#f1e2a6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><path d="M206 326h-52v44" fill="none" stroke="#f1e2a6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs>
+<linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2ba3ae"/><stop offset="1" stop-color="#0b3138"/></linearGradient>
+<radialGradient id="th" cx="0.22" cy="0.08" r="0.85"><stop offset="0" stop-color="#fff" stop-opacity="0.42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="tb" x1="0" y1="0" x2="0" y2="1"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.28"/></linearGradient>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="11"/><feOffset dy="16"/><feComponentTransfer><feFuncA type="linear" slope=".42"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#cfe6e9"/><stop offset=".3" stop-color="#ffffff"/><stop offset=".75" stop-color="#e3f1f2"/><stop offset="1" stop-color="#a9cfd4"/></linearGradient>
+<linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9605a"/><stop offset=".5" stop-color="#9fc9cf"/><stop offset="1" stop-color="#5f86d6"/></linearGradient>
+<linearGradient id="gs" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#0b3138" stop-opacity=".22"/></linearGradient>
+<linearGradient id="rc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8f80"/><stop offset=".55" stop-color="#dd463d"/><stop offset="1" stop-color="#9c2228"/></linearGradient>
+<linearGradient id="rn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e2574c"/><stop offset="1" stop-color="#a1262b"/></linearGradient>
+<linearGradient id="bc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93b8ff"/><stop offset=".55" stop-color="#3f70d2"/><stop offset="1" stop-color="#22418c"/></linearGradient>
+<linearGradient id="bn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4f7fdc"/><stop offset="1" stop-color="#26488f"/></linearGradient>
+<linearGradient id="pt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffdf85"/><stop offset=".6" stop-color="#f0b43a"/><stop offset="1" stop-color="#c58714"/></linearGradient><linearGradient id="pr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9a72a"/><stop offset="1" stop-color="#9e6a0c"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#tg)"/><rect width="512" height="512" rx="112" fill="url(#th)"/><rect width="512" height="512" rx="112" fill="url(#tb)"/><rect x="5" y="5" width="502" height="502" rx="108" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="4"/>
+<g filter="url(#sh)">
+  <!-- diyalizat portları (karşı akım: altta giriş, üstte çıkış) -->
+  <rect x="320" y="176" width="80" height="40" rx="12" fill="url(#pt)"/>
+  <rect x="384" y="170" width="22" height="52" rx="8" fill="url(#pr)"/>
+  <rect x="330" y="181" width="56" height="9" rx="4.5" fill="#fff" fill-opacity=".45"/>
+  <rect x="112" y="300" width="80" height="40" rx="12" fill="url(#pt)"/>
+  <rect x="106" y="294" width="22" height="52" rx="8" fill="url(#pr)"/>
+  <rect x="126" y="305" width="56" height="9" rx="4.5" fill="#fff" fill-opacity=".45"/>
+  <!-- gövde -->
+  <rect x="172" y="120" width="168" height="272" rx="34" fill="url(#gl)"/>
+  <clipPath id="cb"><rect x="180" y="128" width="152" height="256" rx="28"/></clipPath>
+  <g clip-path="url(#cb)"><rect x="194" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="207" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="220" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="233" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="246" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="259" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="272" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="285" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="298" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/><rect x="311" y="150" width="7" height="212" rx="3.5" fill="url(#fb)"/>
+    <rect x="180" y="128" width="152" height="256" fill="url(#gs)"/>
+  </g>
+  <rect x="190" y="150" width="16" height="212" rx="8" fill="#fff" fill-opacity=".75"/>
+  <rect x="172" y="120" width="168" height="272" rx="34" fill="none" stroke="#ffffff" stroke-opacity=".9" stroke-width="3"/>
+  <!-- arteriyel (kırmızı) başlık ve kan girişi -->
+  <rect x="234" y="52" width="44" height="58" rx="14" fill="url(#rn)"/>
+  <rect x="160" y="88" width="192" height="72" rx="30" fill="url(#rc)"/>
+  <rect x="178" y="96" width="156" height="18" rx="9" fill="#fff" fill-opacity=".38"/>
+  <!-- venöz (mavi) başlık ve kan çıkışı -->
+  <rect x="234" y="402" width="44" height="58" rx="14" fill="url(#bn)"/>
+  <rect x="160" y="352" width="192" height="72" rx="30" fill="url(#bc)"/>
+  <rect x="178" y="360" width="156" height="18" rx="9" fill="#fff" fill-opacity=".34"/>
+</g></svg>
