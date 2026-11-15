@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.6', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.6.1', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -223,7 +223,7 @@
   const OX = { c: {}, v: {}, p: {}, n: () => null, prevOf: () => null };
   const ruleText = r => { if (typeof r.o !== 'function') return r.o; try { return r.o(OX); } catch (e) { return '(metin hasta verisine göre oluşturulur)'; } };
   /* ---------------- Yönetmelik ---------------- */
-  const KEYART = ['Madde 6', 'Madde 22', 'Madde 23', 'Madde 31', 'Madde 32', 'Geçici Madde 2', 'EK-3'];
+  const KEYART = ['Madde 6', 'Madde 22', 'Madde 23', 'Madde 31', 'Madde 32', 'Geçici Madde 2', 'EK-3', 'EK-6'];
   function yonList(q) {
     const A = window.YONETMELIK || [], ql = (q || '').toLocaleLowerCase('tr'), hl = s => { s = esc(s); if (ql.length < 2) return s; const i = s.toLocaleLowerCase('tr').indexOf(ql); return i < 0 ? s : s.slice(0, i) + '<mark>' + s.slice(i, i + ql.length) + '</mark>' + s.slice(i + ql.length); };
     let b = '', out = '', n = 0;
@@ -238,7 +238,7 @@
       <div class="row">${KEYART.map(k => `<button class="rt-chip" data-act="yjump" data-id="y-${k.replace(/\s/g, '')}">${k}</button>`).join('')}</div>
       <div class="f"><label for="yq">Yönetmelikte ara</label><input id="yq" type="search" placeholder="ör. rapor, sertifikalı, reuse, ev hemodiyalizi" autocomplete="off"></div>
       <div id="ylist" style="display:flex;flex-direction:column;gap:6px">${yonList('')}</div>
-      <p class="cap">Ana metin Resmî Gazete’de yayımlanan metindir. Eklerden yalnız EK-3 (tetkikler) yer alır; EK-3 metni yazarlarca sağlanmıştır. Bağlayıcı olan Resmî Gazete metnidir.</p>`;
+      <p class="cap">Ana metin Resmî Gazete’de yayımlanan metindir. Eklerden EK-3 (tetkikler) ve EK-6 (zorunlu ilaçlar) yer alır; ekler Resmî Gazete ek PDF’inden aktarılmıştır. Bağlayıcı olan Resmî Gazete metnidir.</p>`;
   }
 
   /* ---------------- Veri ve yedek ---------------- */
