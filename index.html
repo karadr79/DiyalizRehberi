@@ -8,7 +8,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Kronik hemodiyaliz ve periton diyalizi hastalarının aylık izlem ve tedavi planlaması için karar desteği: yeterlilik, reçete, volüm ve kan basıncı.">
 <meta name="author" content="Prof. Dr. Ekrem Kara, Prof. Dr. Tuncay Şahutoğlu">
-<meta name="theme-color" content="#3a141c">
+<meta name="theme-color" content="#123038">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="fonts.css">
@@ -17,23 +17,23 @@
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0} [hidden]{display:none!important}
 :root{
-  --bg:#f5f3f4; --surface:#ffffff; --surface2:#f1ecee; --ink:#1c1518; --muted:#655a5e; --line:#e0d7da;
-  --accent:#a8323f; --accent-ink:#ffffff; --accent-soft:#f8e9eb; --nav:#3a141c; --nav-ink:#f6e8ea; --nav-dim:#d3aab1;
-  --hd:#a8323f; --hd-soft:#f8e9eb; --pd:#2a6aa8; --pd-soft:#e6f0f9;
-  --draft:#8a4e08; --draft-soft:#fbefdc; --ok:#2a7a4b; --ok-soft:#e5f3ea; --warn:#9a6a08; --warn-soft:#fbf1d9; --bad:#b4372b; --bad-soft:#fbe7e4; --info:#3d6690; --info-soft:#e8eff6;
+  --bg:#f3f5f8; --surface:#ffffff; --surface2:#eef2f7; --ink:#14202e; --muted:#5a6878; --line:#d8dfe8;
+  --accent:#0e6672; --accent-ink:#ffffff; --accent-soft:#e2f0f1; --nav:#123038; --nav-ink:#dceaec; --nav-dim:#93b0b5;
+  --hd:#0e6672; --hd-soft:#e2f0f1; --pd:#1f5f99; --pd-soft:#e3edf8;
+  --draft:#8a4e08; --draft-soft:#fbefdc; --ok:#2f7d4f; --ok-soft:#e6f2ea; --warn:#9a6a08; --warn-soft:#fbf2dc; --bad:#b4372b; --bad-soft:#fbe8e5; --info:#3d6690; --info-soft:#e8eff6;
   --font-body:"Atkinson Hyperlegible Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --font-head:var(--font-body);
   --font-mono:"Atkinson Hyperlegible Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#151012; --surface:#1f181a; --surface2:#281f22; --ink:#f0e8ea; --muted:#b3a5a9; --line:#3a2e31;
-  --accent:#ee9aa4; --accent-ink:#2a0d12; --accent-soft:#3d1c22; --nav:#1c0b0f; --nav-ink:#f3e3e6; --nav-dim:#a98289;
-  --hd:#ee9aa4; --hd-soft:#3d1c22; --pd:#8dbdea; --pd-soft:#1b2c3d;
-  --draft:#f0b45c; --draft-soft:#3a2a12; --ok:#6fc591; --ok-soft:#173224; --warn:#e3b04f; --warn-soft:#382b10; --bad:#ef7d6f; --bad-soft:#3d1a16; --info:#9cc0e4; --info-soft:#1c2a39; color-scheme:dark}}
+  --bg:#0f1620; --surface:#17212d; --surface2:#1d2a38; --ink:#e4ebf3; --muted:#9aabbd; --line:#2b3a4b;
+  --accent:#6cc0c9; --accent-ink:#0b1a1d; --accent-soft:#17323a; --nav:#0b151a; --nav-ink:#d6e6e9; --nav-dim:#7f9ca2;
+  --hd:#6cc0c9; --hd-soft:#17323a; --pd:#6fa8dc; --pd-soft:#1c3048;
+  --draft:#f0b45c; --draft-soft:#3a2a12; --ok:#69c08a; --ok-soft:#173224; --warn:#e3b04f; --warn-soft:#382b10; --bad:#ef7d6f; --bad-soft:#3d1a16; --info:#9cc0e4; --info-soft:#1c2a39; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#151012; --surface:#1f181a; --surface2:#281f22; --ink:#f0e8ea; --muted:#b3a5a9; --line:#3a2e31;
-  --accent:#ee9aa4; --accent-ink:#2a0d12; --accent-soft:#3d1c22; --nav:#1c0b0f; --nav-ink:#f3e3e6; --nav-dim:#a98289;
-  --hd:#ee9aa4; --hd-soft:#3d1c22; --pd:#8dbdea; --pd-soft:#1b2c3d;
-  --draft:#f0b45c; --draft-soft:#3a2a12; --ok:#6fc591; --ok-soft:#173224; --warn:#e3b04f; --warn-soft:#382b10; --bad:#ef7d6f; --bad-soft:#3d1a16; --info:#9cc0e4; --info-soft:#1c2a39; color-scheme:dark}
+  --bg:#0f1620; --surface:#17212d; --surface2:#1d2a38; --ink:#e4ebf3; --muted:#9aabbd; --line:#2b3a4b;
+  --accent:#6cc0c9; --accent-ink:#0b1a1d; --accent-soft:#17323a; --nav:#0b151a; --nav-ink:#d6e6e9; --nav-dim:#7f9ca2;
+  --hd:#6cc0c9; --hd-soft:#17323a; --pd:#6fa8dc; --pd-soft:#1c3048;
+  --draft:#f0b45c; --draft-soft:#3a2a12; --ok:#69c08a; --ok-soft:#173224; --warn:#e3b04f; --warn-soft:#382b10; --bad:#ef7d6f; --bad-soft:#3d1a16; --info:#9cc0e4; --info-soft:#1c2a39; color-scheme:dark}
 [data-mod="PD"]{--accent:var(--pd);--accent-soft:var(--pd-soft)}
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -45,14 +45,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .app{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:100%}
 .side{background:var(--nav);color:var(--nav-ink);position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow-y:auto;padding:22px 14px 28px max(14px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
 .brand{display:flex;gap:12px;align-items:center;padding:0 6px}
-.brand b{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;display:block;line-height:1.1}
+.brand b{font-size:1.32rem;font-weight:600;letter-spacing:.01em;display:block;line-height:1.1}
 .brand small{color:var(--nav-dim);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
 .navgroup{display:flex;flex-direction:column;gap:2px}
 .navlabel{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--nav-dim);padding:10px 10px 4px;display:flex;align-items:center;gap:8px}
 .navlabel i{width:9px;height:9px;border-radius:2px;display:inline-block}
 .navbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:8px 10px;color:var(--nav-ink);cursor:pointer;font-size:.94rem;min-height:38px}
 .navbtn:hover{background:rgba(255,255,255,.07)}
-.navbtn[aria-current="page"]{background:rgba(255,255,255,.15);font-weight:700}
+.navbtn[aria-current="page"]{background:rgba(255,255,255,.14);font-weight:600}
 .navbtn .yr{margin-left:auto;font-family:var(--font-mono);font-size:.72rem;color:var(--nav-dim)}
 .sidefoot{margin-top:auto;font-size:.75rem;color:var(--nav-dim);padding:8px 8px 0;display:flex;flex-direction:column;gap:8px}
 .themebtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:var(--nav-ink);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:.8rem}
@@ -61,9 +61,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 main{min-width:0;padding-block:30px 90px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
 .wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
 .eyebrow{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-h1{font-weight:800;font-size:2.05rem;line-height:1.15;margin:6px 0 0;text-wrap:balance;letter-spacing:-.02em}
+h1{font-weight:600;font-size:2.15rem;line-height:1.15;margin:6px 0 0;text-wrap:balance}
 .lede{color:var(--muted);max-width:68ch;margin:10px 0 0;font-size:1.02rem}
-h2{font-weight:700;font-size:1.32rem;margin:0;text-wrap:balance;line-height:1.25;letter-spacing:-.01em}
+h2{font-weight:600;font-size:1.42rem;margin:0;text-wrap:balance;line-height:1.25}
 h3{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:4px 0 0;font-weight:700}
 .sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px;flex-wrap:wrap}
 p.txt{margin:0;max-width:72ch}
@@ -77,7 +77,7 @@ tr:last-child td{border-bottom:0}
 td.n,th.n{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .cap{font-size:.8rem;color:var(--muted);margin:0}
 /* kartlar ve form */
-.calc{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .calc>header{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .calc>header b{font-size:1.02rem}
 .calc>header span{font-size:.78rem;color:var(--muted)}
@@ -120,12 +120,12 @@ td.n,th.n{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .sum{display:flex;gap:8px;flex-wrap:wrap}
 /* ana sayfa */
 .duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-.modcard{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--accent);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.modcard{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .modcard h2{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .modcard h2 span{font-family:var(--font-mono);font-size:.8rem;color:var(--muted);font-weight:400}
 .modcard p{margin:0;color:var(--muted);font-size:.9rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-.mod{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.mod{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:14px;cursor:pointer}.mod:hover{border-color:var(--accent)}
 .mod b{font-size:1rem;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .mod span{color:var(--muted);font-size:.84rem}
 .mod .yr{font-family:var(--font-mono);font-size:.72rem;color:var(--accent)}
@@ -149,13 +149,13 @@ details.md.key>summary::after{content:"klinik izlem";margin-left:auto;font-size:
 mark{background:var(--draft-soft);color:inherit;padding:0 2px;border-radius:2px}
 .disclaimer{font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;max-width:76ch;margin:0}
 .authors{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.authors span{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px 6px 6px;font-weight:700;font-size:.9rem}
-.authors i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-style:normal;font-size:.72rem;font-weight:800}
+.authors span{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px 6px 6px;font-weight:600;font-size:.9rem}
+.authors i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-style:normal;font-size:.72rem;font-weight:700}
 .empty{border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--muted)}
 @media (max-width:900px){
   .app{grid-template-columns:minmax(0,1fr)}
   .top{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--nav);color:var(--nav-ink);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));--hk-base:var(--nav)}
-  .top b{font-size:1.1rem;font-weight:800}
+  .top b{font-size:1.1rem;font-weight:600}
   .top button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:var(--nav-ink);border-radius:7px;padding:6px 11px;cursor:pointer;min-height:36px}
   .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:40;transform:translateX(-102%);transition:transform .2s ease;padding-top:calc(22px + env(safe-area-inset-top,0px));height:100%}
   .side.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.4)}

@@ -331,7 +331,7 @@
 
   /* ---------------- Başlat ---------------- */
   load();
-  if (window.DA) DA.config({ app: 'Diyaliz Rehberi', file: 'DiyalizRehberi', color: '#E88A93', noFab: true, kind: 'Aylık vizit özeti', org: AUT + ' · ', org2: AUT, directTitle: 'Aylık vizit özeti', patientTitle: 'Hasta', footer: 'Klinik karar desteği amaçlıdır; hasta özelinde hekim değerlendirmesinin yerini tutmaz. Dosya cihazda oluşturulmuştur.' });
+  if (window.DA) DA.config({ app: 'Diyaliz Rehberi', file: 'DiyalizRehberi', color: '#4FB3BE', noFab: true, kind: 'Aylık vizit özeti', org: AUT + ' · ', org2: AUT, directTitle: 'Aylık vizit özeti', patientTitle: 'Hasta', footer: 'Klinik karar desteği amaçlıdır; hasta özelinde hekim değerlendirmesinin yerini tutmaz. Dosya cihazda oluşturulmuştur.' });
   if (window.RTEU) RTEU.init({ key: 'diyaliz', version: VER, date: VDATE, tools: '.sidefoot', view: '#view', rem: true, press: '.mod,.btn,.navbtn', cards: '.calc', reset: false, enter: false });
   window.addEventListener('hashchange', () => { const h = (location.hash || '').replace('#', ''); if (h && h !== cur.route) go(h); });
   go((location.hash || '').replace('#', '') || 'home');
