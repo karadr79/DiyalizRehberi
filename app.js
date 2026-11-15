@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.3', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.4', VDATE = '15.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -75,12 +75,12 @@
   function modCard(m) {
     const ps = byMod(m), bad = ps.filter(p => { const a = lastAy(p); return a && D.evaluate(p, a).recs.some(r => r.s === 'bad'); }).length;
     return `<section class="modcard" data-mod="${m}"><h2>${MODN[m]}<span>${ps.length} hasta</span></h2>
-      <p>${m === 'HD' ? 'spKt/V, URR, eKt/V ve stdKt/V; seans reçetesi ve diyalizat; UF hızı, kuru ağırlık ve kan basıncı; anemi ve KBH-MKB.' : 'Haftalık Kt/V ve kreatinin klirensi, rezidüel fonksiyon, PET; solüsyon reçetesi ve glukoz yükü; volüm ve kan basıncı; anemi ve KBH-MKB.'}</p>
+      <p>${m === 'HD' ? 'Yeterlilik, reçete, volüm ve kan basıncı, potasyum ve asit-baz, anemi, KBH-MKB, nutrisyon, damar erişimi, enfeksiyon ve aşı, tetkik takvimi.' : 'Yeterlilik ve PET, solüsyon reçetesi, volüm, potasyum ve asit-baz, anemi, KBH-MKB, nutrisyon, peritonit ve kateter, enfeksiyon ve aşı, tetkik takvimi.'}</p>
       ${bad ? `<p><span class="pill bad">${bad} hastada öncelikli öneri</span></p>` : ''}
       <div class="row"><button class="btn pri" data-go="list/${m}">Hastalar</button><button class="btn" data-go="hizli/${m}">Hızlı hesap</button><button class="btn" data-go="ozet/${m}">Göstergeler</button></div></section>`;
   }
   function viewHome() {
-    const road = [['Diyaliz yeterliliği', 1], ['Diyaliz reçetesi', 1], ['Volüm ve kan basıncı', 1], ['Anemi', 1], ['KBH-MKB', 1], ['Nutrisyon', 1], ['Potasyum ve asit-baz', 0], ['Damar erişimi / kateter', 0], ['Enfeksiyon ve aşı', 0], ['Tetkik takvimi', 0]];
+    const road = [['Diyaliz yeterliliği', 1], ['Diyaliz reçetesi', 1], ['Volüm ve kan basıncı', 1], ['Anemi', 1], ['KBH-MKB', 1], ['Nutrisyon', 1], ['Potasyum ve asit-baz', 1], ['Damar erişimi / kateter', 1], ['Enfeksiyon ve aşı', 1], ['Tetkik takvimi', 1]];
     return `<header><div class="eyebrow">Kronik diyaliz · aylık izlem ve karar desteği</div><h1>Diyaliz Rehberi</h1>
       <p class="lede">Hemodiyaliz ve periton diyalizi hastalarının aylık değerlendirmesinde hesaplamaları yapar, kılavuza dayalı önerileri gerekçesiyle sunar ve tüm kaydı PDF ile Excel olarak verir.</p>${authors()}</header>
       ${storageOK ? '' : '<p class="note warn">Bu ortamda cihaz belleğine yazılamıyor; girilen veriler sayfa kapanınca kaybolur. Çalışmayı “Veri ve yedek” bölümünden dosyaya alın.</p>'}
@@ -125,10 +125,11 @@
       <p class="lede">${[MODN[p.mod], p.cins, yas, p.boy ? p.boy + ' cm' : '', vint != null ? 'diyalizin ' + vint + '. ayı' : '', p.dm === 'Var' ? 'DM' : ''].filter(Boolean).join(' · ')}</p></header>`;
     const months = `<div class="months noprint">${ms.map(m => `<button class="rt-chip" data-go="p/${p.id}/${m}/${tab}" aria-current="${m === ay}">${ayKisa(m)}</button>`).join('')}
       <span class="row" style="margin-left:auto"><input type="month" id="newAy" value="${nowAy()}" aria-label="Eklenecek ay" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);min-height:36px"><button class="btn sm pri" data-act="addAy">Ay ekle</button></span></div>`;
-    const tabs = `<div class="tabs noprint" role="tablist">${[['vizit', 'Aylık vizit'], ['egilim', 'Eğilim'], ['bilgi', 'Hasta bilgileri']].map(t => `<button role="tab" aria-selected="${tab === t[0]}" data-go="${t[0] === 'bilgi' ? 'yeni/' + p.mod + '/' + p.id : 'p/' + p.id + '/' + (ay || '-') + '/' + t[0]}">${t[1]}</button>`).join('')}</div>`;
+    const tabs = `<div class="tabs noprint" role="tablist">${[['vizit', 'Aylık vizit'], ['egilim', 'Eğilim'], ['takvim', 'Tetkik takvimi'], ['bilgi', 'Hasta bilgileri']].map(t => `<button role="tab" aria-selected="${tab === t[0]}" data-go="${t[0] === 'bilgi' ? 'yeni/' + p.mod + '/' + p.id : 'p/' + p.id + '/' + (ay || '-') + '/' + t[0]}">${t[1]}</button>`).join('')}</div>`;
     let body;
     if (!ay) body = `<div class="empty">Bu hastada henüz aylık vizit yok. Yukarıdan ayı seçip “Ay ekle” ile başlayın.</div>`;
     else if (tab === 'egilim') body = trend(p);
+    else if (tab === 'takvim') body = takvimHTML(p, ay);
     else body = `<div class="sechead"><h2>${ayAd(ay)}</h2><span class="row noprint"><button class="btn sm pri" data-act="exp">PDF / Excel</button><button class="btn sm danger" data-act="delAy">Bu ayı sil</button></span></div>${visitForm(p, ay)}`;
     return head + months + tabs + body + disc();
   }
@@ -145,7 +146,7 @@
   function refresh() {
     const p = cur.p, ay = cur.ay; if (!p || !ay || !p.visits[ay] || !$('#sum')) return;
     const v = p.visits[ay], ev = D.evaluate(p, ay), der = D.derived(p, ev.c), fm = D.fieldMap(p.mod);
-    ['yet', 'rec', 'vol', 'ane', 'mkb', 'nut', 'lab', 'mev'].forEach(g => {
+    ['yet', 'rec', 'vol', 'kab', 'ane', 'mkb', 'nut', 'eri', 'enf', 'lab', 'mev'].forEach(g => {
       const o = $('#out-' + g); if (o) { const d = der.filter(x => x.g === g); o.innerHTML = d.map(x => `<div><small>${esc(x.l)}</small><strong>${fmt(x.v, x.d)}</strong> ${esc(x.u)}${x.note ? `<em>${esc(x.note)}</em>` : ''}</div>`).join(''); o.hidden = !d.length; }
       const r = $('#rec-' + g); if (r) { const rs = ev.recs.filter(x => x.g === g); r.innerHTML = rs.map(x => recHTML(x, v, !p.temp)).join('') || (g === 'mev' ? '<p class="cap">Bu ay için mevzuat hatırlatması yok.</p>' : ''); }
     });
@@ -161,6 +162,13 @@
     PD: [['Haftalık Kt/V', c => c.ktv, 2], ['Rezidüel fonksiyon (mL/dk)', c => c.rkf, 1], ['İdrar (mL/gün)', (c, n) => n('idrar'), 0], ['Net UF (mL/gün)', (c, n) => n('uf'), 0], ['Toplam çıkış (mL/gün)', c => c.cikis, 0], ['Ağırlık (kg)', (c, n) => n('kilo'), 1], ['Sistolik KB (mmHg)', (c, n) => n('S'), 0], ['Glukoz yükü (g/gün)', c => c.gluk, 0],
       ...TR_ORT, ['Potasyum (mmol/L)', (c, n) => n('k'), 1], ['Albümin (g/dL)', (c, n) => n('alb'), 1]]
   };
+  const TDUR = { yok: ['bad', 'Kayıt yok'], gecikti: ['warn', 'Zamanı geldi'], guncel: ['ok', 'Güncel'] };
+  function takvimHTML(p, ay) {
+    const t = D.takvim(p, ay), n = t.filter(x => x.durum !== 'guncel').length;
+    return `<div class="sechead"><h2>Tetkik takvimi</h2><span class="cap">${ayAd(ay)} itibarıyla · ${n} tetkikin zamanı gelmiş veya kaydı yok</span></div>
+      <div class="tbl"><table><thead><tr><th>Tetkik</th><th class="n">Aralık</th><th>Son kayıt</th><th>Sonraki</th><th>Durum</th><th>Dayanak</th></tr></thead><tbody>${t.map(x => `<tr><td>${esc(x.l)}</td><td class="n">${x.i} ay</td><td>${x.son ? ayKisa(x.son) : '—'}</td><td>${x.sonraki ? ayKisa(x.sonraki) : '—'}</td><td><span class="pill ${TDUR[x.durum][0]}">${TDUR[x.durum][1]}</span></td><td class="cap">${esc(x.src)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="cap">Aralıklar kılavuz önerilerine göredir; hastanın tedavisine göre (ESA, aktif D vitamini, hepatit B bağışıklığı) değişir. Yönetmeliğin EK-3 tetkik listesi bu sürüme eklenmemiştir.</p>`;
+  }
   function trend(p) {
     const ms = D.sortedMonths(p).slice(-12), cs = ms.map(a => D.compute(p, p.visits[a], a));
     const rows = TREND[p.mod].map(t => { const vals = ms.map((a, i) => t[1](cs[i], k => D.val(p.mod, p.visits[a], k))); return vals.some(x => x != null) ? `<tr><td>${t[0]}</td><td>${spark(vals, 110, 26)}</td>${vals.map(x => `<td class="n">${fmt(x, t[2])}</td>`).join('')}</tr>` : ''; }).join('');
@@ -178,14 +186,15 @@
     return `<header><div class="eyebrow">${MODN[m]}</div><h1>Ünite göstergeleri</h1><p class="lede">${ayAd(ay)}: ${act.length} hastanın vizit kaydı. Payda, ilgili verisi girilmiş hasta sayısıdır.</p></header>
       <div class="months noprint">${all.slice(-12).map(a => `<button class="rt-chip" data-go="ozet/${m}/${a}" aria-current="${a === ay}">${ayKisa(a)}</button>`).join('')}</div>
       <div class="tbl"><table><thead><tr><th>Gösterge</th><th class="n">Hedefte</th><th class="n">Oran</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <section><div class="sechead"><h2>Zamanı gelen tetkikler</h2></div>${(() => { const r = act.map(p => ({ p, t: D.takvim(p, ay).filter(x => x.durum !== 'guncel') })).filter(x => x.t.length); return r.length ? `<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Hasta</th><th>Tetkikler</th></tr></thead><tbody>${r.map(x => `<tr><td><a href="#p/${x.p.id}/${ay}/takvim" data-go="p/${x.p.id}/${ay}/takvim">${esc(x.p.kod)}</a></td><td>${x.t.map(t => esc(t.l)).join(', ')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="cap" style="margin-top:12px">Tüm tetkikler güncel.</p>'; })()}</section>
       <section><div class="sechead"><h2>Öncelikli hastalar</h2></div>${pri.length ? `<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Hasta</th><th>Öncelikli öneriler</th><th class="n">Uyarı</th></tr></thead><tbody>${pri.map(x => `<tr><td><a href="#p/${x.p.id}/${ay}" data-go="p/${x.p.id}/${ay}">${esc(x.p.kod)}</a></td><td>${x.b.map(r => esc(r.k)).join('; ') || '—'}</td><td class="n">${x.w}</td></tr>`).join('')}</tbody></table></div>` : '<p class="cap" style="margin-top:12px">Bu ay öncelikli öneri veya uyarı yok.</p>'}</section>${disc()}`;
   }
 
   /* ---------------- Kural tablosu ---------------- */
   function viewRules(m) {
-    const gs = ['yet', 'rec', 'vol', 'ane', 'mkb', 'nut', 'mev'];
+    const gs = ['yet', 'rec', 'vol', 'kab', 'ane', 'mkb', 'nut', 'eri', 'enf', 'mev'];
     return `<header><div class="eyebrow">${MODN[m]}</div><h1>Kural tablosu</h1><p class="lede">Uygulamanın ${m} için verdiği her önerinin koşulu, metni ve dayanağı. Eşikler ve metinler bu tablodan yönetilir.</p></header>
-      <p class="note warn">Sürüm ${VER}: anemi kuralları KDIGO Anemi 2026, KBH-MKB kuralları KDIGO 2017 metninden (KDIGO KBH KILAVUZLARI not defteri) alınmıştır. Yeterlilik, reçete ve volüm eşikleri KDOQI, ISPD ve EBPG’ye dayanır ve Nefroloji Kaynaklar eBook not defteriyle karşılaştırılmıştır; nutrisyon kuralları ISRNM uzlaşısı ve aynı defterdeki beslenme kaynaklarına dayanır. Tüm kurallar yazar onayı bekliyor. Düzeltme için tabloyu Excel’e alıp satır bazında not düşebilirsiniz.</p>
+      <p class="note warn">Sürüm ${VER}: anemi kuralları KDIGO Anemi 2026, KBH-MKB kuralları KDIGO 2017 metninden (KDIGO KBH KILAVUZLARI not defteri) alınmıştır. Yeterlilik, reçete ve volüm eşikleri KDOQI, ISPD ve EBPG’ye dayanır ve Nefroloji Kaynaklar eBook not defteriyle karşılaştırılmıştır; nutrisyon, damar erişimi, peritonit ve aşı kuralları aynı defterin kaynaklarına, hepatit taraması CDC ve KDIGO HCV 2022’ye, potasyum kuralları KDIGO tartışmalar konferansına dayanır. Tüm kurallar yazar onayı bekliyor. Düzeltme için tabloyu Excel’e alıp satır bazında not düşebilirsiniz.</p>
       <div class="row"><button class="btn pri" data-act="expRules">Kural tablosunu Excel’e aktar</button><button class="btn" data-go="kural/${m === 'HD' ? 'PD' : 'HD'}">${m === 'HD' ? 'PD' : 'HD'} kurallarına geç</button></div>
       ${gs.map(g => { const rs = D.RULES[m].filter(r => r.g === g); return rs.length ? `<section><div class="sechead"><h2>${D.GRP[g]}</h2><span class="cap">${rs.length} kural</span></div><div class="tbl" style="margin-top:12px"><table><thead><tr><th>Kod</th><th>Koşul</th><th>Öneri</th><th>Dayanak</th></tr></thead><tbody>${rs.map(r => `<tr><td style="white-space:nowrap"><span class="pill ${r.s}">${r.id}</span></td><td>${esc(r.k)}</td><td>${esc(ruleText(r))}</td><td>${esc(r.src)}</td></tr>`).join('')}</tbody></table></div></section>` : ''; }).join('')}${disc()}`;
   }
@@ -228,7 +237,7 @@
         <li>KDOQI Hemodiyaliz Yeterliliği Kılavuzu, 2015 güncellemesi (Am J Kidney Dis 2015;66:884-930) ve 2006 sürümü</li><li>Avrupa En İyi Uygulama Kılavuzları (EBPG/ERBP): hemodiyaliz stratejileri ve hemodinamik instabilite, 2007; periton diyalizi, 2005</li>
         <li>KDIGO Tartışmalar Konferansları: diyalizde kan basıncı ve volüm yönetimi (2020); potasyum yönetimi (2020)</li><li>KDIGO Anemi Kılavuzu, 2026</li><li>KDIGO KBH-MKB Kılavuzu, 2017 güncellemesi</li>
         <li>ISPD: yüksek kaliteli, hedefe yönelik periton diyalizi reçetelendirme (Perit Dial Int 2020;40:244-253); kardiyovasküler ve metabolik kılavuz (2015); membran disfonksiyonu (2021); peritonit (2022)</li>
-        <li>ISRNM protein-enerji kaybı uzlaşısı (Fouque ve ark., Kidney Int 2008); Nutrition in Kidney Disease; Oxford Handbook of Dialysis</li><li>ERA-EDTA/ESH uzlaşısı: diyaliz hastalarında hipertansiyon (Sarafidis ve ark., Nephrol Dial Transplant 2017)</li><li>Diyaliz Merkezleri Hakkında Yönetmelik, Resmî Gazete 13.11.2026, Sayı 33429</li></ul></section>
+        <li>ISRNM protein-enerji kaybı uzlaşısı (Fouque ve ark., Kidney Int 2008); Nutrition in Kidney Disease; Oxford Handbook of Dialysis</li><li>KDOQI Damar Erişimi Kılavuzu, 2019; Interventional Nephrology</li><li>ISPD peritonit önerileri (2022) ve kateter ilişkili enfeksiyon önerileri (2023)</li><li>CDC diyaliz ünitelerinde enfeksiyon önlemleri; KDIGO HCV 2022; KDIGO Nakil Adayı 2020</li><li>ERA-EDTA/ESH uzlaşısı: diyaliz hastalarında hipertansiyon (Sarafidis ve ark., Nephrol Dial Transplant 2017)</li><li>Diyaliz Merkezleri Hakkında Yönetmelik, Resmî Gazete 13.11.2026, Sayı 33429</li></ul></section>
       <section><div class="sechead"><h2>Hesaplamalar</h2></div><div class="tbl" style="margin-top:12px"><table><thead><tr><th>Hesap</th><th>Formül</th></tr></thead><tbody>
         <tr><td>spKt/V (Daugirdas II)</td><td>−ln(R − 0,008 × t) + (4 − 3,5 × R) × UF / W; R: çıkış/giriş üre, t: saat, UF: litre, W: çıkış ağırlığı (kg)</td></tr>
         <tr><td>eKt/V</td><td>spKt/V × t / (t + 30,7); t: dakika (uyarlanmış Tattersall)</td></tr><tr><td>stdKt/V</td><td>Leypoldt eşitliği (sabit hacim); ultrafiltrasyon ve rezidüel fonksiyon katkısı eklenmez</td></tr>
@@ -246,6 +255,7 @@
     it.push({ title: 'Hasta ve dönem', inputs: [['Hasta kodu', p.kod || '—'], ['Yöntem', MODN[p.mod]], ['Dönem', ayAd(ay)]].concat(D.PFIELDS.filter(f => !['kod'].includes(f.k) && (!f.only || f.only === p.mod) && p[f.k] != null && p[f.k] !== '').map(f => [f.l, f.t === 'm' ? ayAd(p[f.k]) : p[f.k], f.u || ''])) });
     D.SCHEMA[p.mod].forEach(g => { const ins = g.f.filter(f => v[f.k] != null && v[f.k] !== '').map(f => [f.l, v[f.k], f.u || '']), res = der.filter(x => x.g === g.id).map(x => [x.l, fmt(x.v, x.d), x.u, x.note]), nt = ev.recs.filter(r => r.g === g.id).map(r => recLine(r, v)); if (ins.length || res.length || nt.length) it.push({ title: g.t, inputs: ins, results: res, notes: nt }); });
     const mv = ev.recs.filter(r => r.g === 'mev'); if (mv.length) it.push({ title: D.GRP.mev, notes: mv.map(r => recLine(r, v)) });
+    const tk = D.takvim(p, ay); if (tk.length) it.push({ title: 'Tetkik takvimi', results: tk.map(x => [x.l, x.durum === 'guncel' ? 'Güncel' : x.durum === 'gecikti' ? 'Zamanı geldi' : 'Kayıt yok', '', 'Aralık ' + x.i + ' ay; son ' + (x.son ? ayAd(x.son) : '—') + '; sonraki ' + (x.sonraki ? ayAd(x.sonraki) : '—')]) });
     if (v.plan) it.push({ title: 'Hekim değerlendirmesi ve plan', text: String(v.plan).split('\n'), textTitle: 'Plan' });
     return it;
   }
@@ -273,18 +283,19 @@
   /* ---------------- Örnek veri ---------------- */
   function demo() {
     const id = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), n = nowAy(), mAgo = k => { const d = new Date(parseInt(n.slice(0, 4), 10), parseInt(n.slice(5, 7), 10) - 1 - k, 1); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); };
+    const ENFD = { hbsag: 'Negatif', antiHbs: 85, antiHcv: 'Negatif', antiHiv: 'Negatif', hbvAsi: 'Seri tamamlandı', gripAy: '2025-10', pnomo: 'Yok', zona: 'Yok' };
     const MKBHD = { esa: 'Epoetin alfa/beta', esaDoz: 6000, demir: 'IV demir sükroz', demirDoz: 400, hifphi: 'Yok', caBag: 'Kalsiyum asetat', caBagEl: 1000, nonCa: 'Yok', vitD: 'Kalsitriol', vitDDoz: 1.5, kalsim: 'Yok', pthUst: 65 };
     const rHD = { sure: 240, seans: 3, erisim: 'AV fistül', igne: '16G', qb: 320, qd: 500, membran: 'HD, high-flux', yuzey: 1.8, dK: 2, dCa: '1.5', dHCO3: 32, dNa: 138, dT: 36.5, antiko: 'Standart heparin', antikoDoz: '2000 IU bolus + 1000 IU/saat', kuru: 70, ahSayi: 1 };
     const a = { id: id(), mod: 'HD', kod: 'ÖRNEK-HD-01', cins: 'Erkek', dogum: 1961, boy: 172, basla: mAgo(30), dm: 'Var', nakil: 'Değerlendirilmedi', visits: {} };
-    a.visits[mAgo(2)] = Object.assign({}, rHD, MKBHD, { preU: 138, postU: 42, idrar: 300, preW: 72.6, postW: 70.2, preS: 148, preD: 84, postS: 132, postD: 78, idh: 0, odem: 'Yok', hb: 10.8, ferritin: 420, tsat: 26, ca: 8.9, p: 5.2, alb: 3.8, pth: 380, k: 5.1, hco3: 22 });
+    a.visits[mAgo(2)] = Object.assign({}, rHD, MKBHD, ENFD, { erisim: 'AV fistül', igne: '16G', qa: 820, preU: 138, postU: 42, idrar: 300, preW: 72.6, postW: 70.2, preS: 148, preD: 84, postS: 132, postD: 78, idh: 0, odem: 'Yok', hb: 10.8, ferritin: 420, tsat: 26, ca: 8.9, p: 5.2, alb: 3.8, pth: 380, k: 5.1, hco3: 22 });
     a.visits[mAgo(1)] = Object.assign({}, rHD, MKBHD, { preU: 142, postU: 47, idrar: 250, preW: 73.4, postW: 70.4, preS: 156, preD: 88, postS: 138, postD: 80, idh: 1, nadir: 96, odem: 'Yok', hb: 10.4, ferritin: 390, tsat: 24, ca: 9.0, p: 5.8, alb: 3.7, pth: 410, k: 5.4, hco3: 21 });
-    a.visits[n] = Object.assign({}, rHD, MKBHD, { sure: 210, qb: 280, preU: 150, postU: 62, idrar: 150, preW: 74.6, postW: 71.0, preS: 168, preD: 92, postS: 146, postD: 84, evS: 148, evD: 88, idh: 3, nadir: 86, odem: '+', ahSayi: 3, hb: 9.8, ferritin: 350, tsat: 19, ca: 9.2, p: 6.4, alb: 3.5, pth: 720, k: 5.9, hco3: 19, npcr: 0.85, mis: 7, sga: 'B: hafif-orta malnütrisyon', istah: 'Azalmış', ons: 'Yok', crp: 12, demir: 'Yok', demirDoz: '' });
+    a.visits[n] = Object.assign({}, rHD, MKBHD, { erisim: 'AV fistül', igne: '16G', qa: 560, fm: 'Uzamış kanama (> 15 dk)', resirk: 12, kBag: 'Yok', kIlac: 'RAAS blokeri', hbvAsi: 'Seri tamamlandı', gripAy: '2025-10', pnomo: 'Yok', zona: 'Yok', sure: 210, qb: 280, preU: 150, postU: 62, idrar: 150, preW: 74.6, postW: 71.0, preS: 168, preD: 92, postS: 146, postD: 84, evS: 148, evD: 88, idh: 3, nadir: 86, odem: '+', ahSayi: 3, hb: 9.8, ferritin: 350, tsat: 19, ca: 9.2, p: 6.4, alb: 3.5, pth: 720, k: 5.9, hco3: 19, npcr: 0.85, mis: 7, sga: 'B: hafif-orta malnütrisyon', istah: 'Azalmış', ons: 'Yok', crp: 12, demir: 'Yok', demirDoz: '' });
     const b = { id: id(), mod: 'HD', kod: 'ÖRNEK-HD-02', cins: 'Kadın', dogum: 1975, boy: 160, basla: mAgo(8), dm: 'Yok', nakil: 'Bekleme listesinde', pdgerekce: 'Geçirilmiş batın cerrahisi, yaygın yapışıklık', visits: {} };
-    b.visits[n] = Object.assign({}, rHD, MKBHD, { kuru: 58, qb: 350, igne: '15G', membran: 'HDF, post-dilüsyon', konv: 24, dK: 3, preU: 120, postU: 30, idrar: 0, preW: 59.6, postW: 58.1, preS: 128, preD: 76, postS: 120, postD: 72, idh: 0, odem: 'Yok', ahSayi: 0, hb: 11.4, ferritin: 510, tsat: 31, ca: 9.1, p: 4.6, alb: 4.1, pth: 290, k: 4.6, hco3: 23, esa: 'Darbepoetin alfa', esaDoz: 20, demir: 'Yok', nonCa: 'Sevelamer', caBag: 'Yok', vitD: 'Yok', kalsim: 'Sinakalset', kalsimDoz: 30, pthUst: 65 });
+    b.visits[n] = Object.assign({}, rHD, MKBHD, ENFD, { erisim: 'Tünelli kateter', igne: 'Kateter', katBas: mAgo(7), kilit: '%4 sitrat', alteplaz: 2, gripAy: n, pnomo: 'PCV20', kuru: 58, qb: 350, igne: '15G', membran: 'HDF, post-dilüsyon', konv: 24, dK: 3, preU: 120, postU: 30, idrar: 0, preW: 59.6, postW: 58.1, preS: 128, preD: 76, postS: 120, postD: 72, idh: 0, odem: 'Yok', ahSayi: 0, hb: 11.4, ferritin: 510, tsat: 31, ca: 9.1, p: 4.6, alb: 4.1, pth: 290, k: 4.6, hco3: 23, esa: 'Darbepoetin alfa', esaDoz: 20, demir: 'Yok', nonCa: 'Sevelamer', caBag: 'Yok', vitD: 'Yok', kalsim: 'Sinakalset', kalsimDoz: 30, pthUst: 65 });
     const rPD = { tip: 'SAPD', dolum: 2, degisim: 4, s136: 6, s227: 2, s386: 0, iko: 0, aa: 0, hedef: 64, furo: 0, raas: 'Yok', ahSayi: 1 };
     const c = { id: id(), mod: 'PD', kod: 'ÖRNEK-PD-01', cins: 'Kadın', dogum: 1968, boy: 158, basla: mAgo(20), dm: 'Var', nakil: 'Nakil merkezine yönlendirildi', visits: {} };
     c.visits[mAgo(4)] = Object.assign({}, rPD, { dVol: 9.2, dUre: 104, pUre: 118, uUre: 520, dKre: 5.6, pKre: 8.4, uKre: 46, idrar: 900, pet: 0.72, petUF: 520, kilo: 64.5, uf: 700, S: 136, D: 82, odem: 'Yok', hb: 11.0, ferritin: 160, tsat: 22, ca: 8.8, p: 4.9, alb: 3.6, pth: 310, k: 4.1, hco3: 24, esa: 'Darbepoetin alfa', esaDoz: 30, demir: 'Oral demir', caBag: 'Kalsiyum karbonat', caBagEl: 800, nonCa: 'Yok', vitD: 'Yok', kalsim: 'Yok', pthUst: 65 });
-    c.visits[n] = Object.assign({}, rPD, { s136: 4, s227: 2, s386: 2, dVol: 9.4, dUre: 108, pUre: 132, uUre: 480, dKre: 6.0, pKre: 9.6, uKre: 40, idrar: 450, pet: 0.84, petUF: 340, kilo: 66.8, uf: 350, S: 152, D: 94, odem: '+', hb: 10.2, ferritin: 140, tsat: 18, npcr: 0.9, mis: 8, ons: 'Yok', ca: 8.6, p: 5.6, alb: 3.2, pth: 420, k: 3.3, hco3: 21, d25: 14, esa: 'Darbepoetin alfa', esaDoz: 30, demir: 'Yok', caBag: 'Kalsiyum karbonat', caBagEl: 800, nonCa: 'Yok', vitD: 'Yok', kalsim: 'Yok', natD: 'Yok', pthUst: 65 });
+    c.visits[n] = Object.assign({}, rPD, ENFD, { esi: 'Şüpheli', profil: 'Yok', pSay: 1, kFonk: 'Normal', kBag: 'Yok', s136: 4, s227: 2, s386: 2, dVol: 9.4, dUre: 108, pUre: 132, uUre: 480, dKre: 6.0, pKre: 9.6, uKre: 40, idrar: 450, pet: 0.84, petUF: 340, kilo: 66.8, uf: 350, S: 152, D: 94, odem: '+', hb: 10.2, ferritin: 140, tsat: 18, npcr: 0.9, mis: 8, ons: 'Yok', ca: 8.6, p: 5.6, alb: 3.2, pth: 420, k: 3.3, hco3: 21, d25: 14, esa: 'Darbepoetin alfa', esaDoz: 30, demir: 'Yok', caBag: 'Kalsiyum karbonat', caBagEl: 800, nonCa: 'Yok', vitD: 'Yok', kalsim: 'Yok', natD: 'Yok', pthUst: 65 });
     const d = { id: id(), mod: 'PD', kod: 'ÖRNEK-PD-02', cins: 'Erkek', dogum: 1982, boy: 176, basla: mAgo(5), dm: 'Yok', nakil: 'Bekleme listesinde', visits: {} };
     d.visits[n] = { tip: 'APD', dolum: 2.2, degisim: 5, s136: 8, s227: 2.5, s386: 0, iko: 2, aa: 0, gunduz: 2, gece: 9, hedef: 78, furo: 250, raas: 'ARB', ahSayi: 1, ktvlab: 2.1, idrar: 1200, pet: 0.66, kilo: 78.4, uf: 900, S: 128, D: 78, odem: 'Yok', hb: 11.6, ferritin: 320, tsat: 28, ca: 9.0, p: 4.8, alb: 3.9, pth: 260, k: 4.4, hco3: 25, esa: 'Yok', demir: 'Yok', caBag: 'Yok', nonCa: 'Sevelamer', vitD: 'Yok', kalsim: 'Yok', pthUst: 65 };
     S.patients.push(a, b, c, d); save();

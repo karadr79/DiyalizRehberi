@@ -12,11 +12,64 @@
      mn/mx: akla yatkınlık sınırı (dışında kalan giriş uyarı verir, hesaplara alınmaz) */
   var LAB = [
     { k: 'alb', l: 'Albümin', u: 'g/dL', t: 'n', mn: 1, mx: 6 },
+    { k: 'na', l: 'Sodyum', u: 'mmol/L', t: 'n', mn: 110, mx: 170 },
+    { k: 'crp', l: 'CRP', u: 'mg/L', t: 'n', mn: 0, mx: 500 },
+    { k: 'hba1c', l: 'HbA1c', u: '%', t: 'n', mn: 3, mx: 20 }
+  ];
+  var KAB = [
     { k: 'k', l: 'Potasyum', u: 'mmol/L', t: 'n', mn: 1.5, mx: 9 },
     { k: 'hco3', l: 'Bikarbonat', u: 'mmol/L', t: 'n', mn: 5, mx: 45 },
-    { k: 'na', l: 'Sodyum', u: 'mmol/L', t: 'n', mn: 110, mx: 170 },
-    { k: 'crp', l: 'CRP', u: 'mg/L', t: 'n', mn: 0, mx: 500 }
+    { k: 'kBag', l: 'Potasyum bağlayıcı', t: 's', c: 1, o: ['Yok', 'Sodyum zirkonyum siklosilikat', 'Patiromer', 'Kalsiyum polistiren sülfonat', 'Sodyum polistiren sülfonat'] },
+    { k: 'kBagDoz', l: 'Bağlayıcı dozu', t: 'x', c: 1, h: 'ör. 5 g/gün, diyaliz dışı günlerde' },
+    { k: 'kIlac', l: 'Potasyumu yükselten ilaç', t: 's', c: 1, o: ['Yok', 'RAAS blokeri', 'MRA', 'RAAS blokeri + MRA', 'Diğer'] },
+    { k: 'bikarb', l: 'Oral sodyum bikarbonat', t: 's', c: 1, o: ['Yok', 'Var'] },
+    { k: 'bikarbDoz', l: 'Bikarbonat dozu', u: 'g/gün', t: 'n', c: 1, mn: 0, mx: 12 },
+    { k: 'kabiz', l: 'Kabızlık', t: 's', o: ['Yok', 'Var'] }
   ];
+  var ERI_HD = [
+    { k: 'erisim', l: 'Damar erişimi', t: 's', c: 1, o: ['AV fistül', 'AV greft', 'Tünelli kateter', 'Geçici kateter'] },
+    { k: 'igne', l: 'İğne çapı', t: 's', c: 1, o: ['17G', '16G', '15G', '14G', 'Kateter'] },
+    { k: 'katBas', l: 'Kateter takılma ayı', t: 'm', c: 1 },
+    { k: 'qa', l: 'Erişim akımı (Qa)', u: 'mL/dk', t: 'n', mn: 50, mx: 4000 },
+    { k: 'resirk', l: 'Resirkülasyon', u: '%', t: 'n', mn: 0, mx: 80 },
+    { k: 'venBas', l: 'Dinamik venöz basınç', u: 'mmHg', t: 'n', mn: 0, mx: 500, h: 'Qb 200 mL/dk, 15G iğne ile' },
+    { k: 'fm', l: 'Erişim fizik muayenesi', t: 's', o: ['Normal', 'Zayıf thrill / üfürüm', 'Hiperpulsatil', 'Kol kaldırmada ven çökmüyor', 'Uzamış kanama (> 15 dk)', 'Kol veya yüz ödemi'] },
+    { k: 'alteplaz', l: 'Alteplaz uygulaması', u: '/ay', t: 'n', mn: 0, mx: 30 },
+    { k: 'kilit', l: 'Kateter kilit solüsyonu', t: 's', c: 1, o: ['Heparin', '%4 sitrat', 'Antibiyotikli kilit', 'Diğer'] },
+    { k: 'crbsi', l: 'Kateter ilişkili kan dolaşımı enfeksiyonu', t: 's', o: ['Yok', 'Var'] },
+    { k: 'etken', l: 'Etken', t: 's', o: ['Bilinmiyor / kültür bekleniyor', 'Koagülaz negatif stafilokok', 'S. aureus', 'Pseudomonas', 'Diğer Gram-negatif', 'Candida', 'Diğer'] },
+    { k: 'esi', l: 'Kateter çıkış yeri', t: 's', o: ['Normal', 'Enfekte'] },
+    { k: 'tunel', l: 'Tünel enfeksiyonu', t: 's', o: ['Yok', 'Var'] }
+  ];
+  var ERI_PD = [
+    { k: 'perit', l: 'Bu ay peritonit', t: 's', o: ['Yok', 'Var'] },
+    { k: 'pLok', l: 'Diyalizat lökosit', u: '/µL', t: 'n', mn: 0, mx: 100000, h: 'En az 2 saatlik bekleme sonrası' },
+    { k: 'pPmn', l: 'Diyalizat nötrofil oranı', u: '%', t: 'n', mn: 0, mx: 100 },
+    { k: 'pEtken', l: 'Peritonit etkeni', t: 's', o: ['Kültür bekleniyor', 'Kültür negatif', 'Koagülaz negatif stafilokok', 'Streptokok', 'S. aureus', 'Enterokok', 'Pseudomonas', 'Diğer Gram-negatif', 'Polimikrobiyal', 'Fungal'] },
+    { k: 'pYanit', l: 'Tedavinin 5. gününde yanıt', t: 's', o: ['Düzeldi', 'Düzelmedi'] },
+    { k: 'pRelaps', l: 'Önceki tedaviden sonraki 4 haftada aynı etken', t: 's', o: ['Yok', 'Var'] },
+    { k: 'pSay', l: 'Son 12 ayda peritonit sayısı', u: 'atak', t: 'n', mn: 0, mx: 20 },
+    { k: 'esi', l: 'Kateter çıkış yeri', t: 's', o: ['Normal', 'Şüpheli', 'Enfekte'] },
+    { k: 'tunel', l: 'Tünel enfeksiyonu', t: 's', o: ['Yok', 'Var'] },
+    { k: 'profil', l: 'Çıkış yeri profilaksisi', t: 's', c: 1, o: ['Yok', 'Mupirosin', 'Gentamisin'] },
+    { k: 'kFonk', l: 'Kateter işlevi', t: 's', o: ['Normal', 'Drenaj sorunu', 'Kaçak'] }
+  ];
+  var ENF = [
+    { k: 'hbsag', l: 'HBsAg', t: 's', o: ['Negatif', 'Pozitif'] },
+    { k: 'antiHbs', l: 'Anti-HBs', u: 'mIU/mL', t: 'n', mn: 0, mx: 100000 },
+    { k: 'antiHbc', l: 'Anti-HBc', t: 's', o: ['Negatif', 'Pozitif'] },
+    { k: 'antiHcv', l: 'Anti-HCV', t: 's', o: ['Negatif', 'Pozitif'] },
+    { k: 'hcvRna', l: 'HCV RNA', t: 's', o: ['Negatif', 'Pozitif'] },
+    { k: 'antiHiv', l: 'Anti-HIV', t: 's', o: ['Negatif', 'Pozitif'] },
+    { k: 'hbvAsi', l: 'Hepatit B aşı durumu', t: 's', c: 1, o: ['Aşısız', 'Seri sürüyor', 'Seri tamamlandı', 'İki seri sonrası yanıtsız'] },
+    { k: 'hbvDoz', l: 'Son hepatit B aşı dozu', t: 'm', c: 1 },
+    { k: 'gripAy', l: 'Son influenza aşısı', t: 'm', c: 1 },
+    { k: 'pnomo', l: 'Pnömokok aşısı', t: 's', c: 1, o: ['Yok', 'PCV20', 'PCV15 + PPSV23', 'PCV13 + PPSV23', 'Yalnız PPSV23'] },
+    { k: 'covidAy', l: 'Son COVID-19 aşısı', t: 'm', c: 1 },
+    { k: 'zona', l: 'Rekombinant zona aşısı', t: 's', c: 1, o: ['Yok', 'Tek doz', 'İki doz tamamlandı'] },
+    { k: 'tdYil', l: 'Son Td/Tdap yılı', t: 'n', c: 1, mn: 1950, mx: 2100 }
+  ];
+
   var ANE = [
     { k: 'hb', l: 'Hemoglobin', u: 'g/dL', t: 'n', mn: 3, mx: 20 },
     { k: 'ferritin', l: 'Ferritin', u: 'ng/mL', t: 'n', mn: 1, mx: 10000 },
@@ -71,8 +124,6 @@
         { k: 'idrar', l: 'İdrar volümü', u: 'mL/gün', t: 'n', mn: 0, mx: 5000, h: 'Anürik hastada 0' }
       ] },
       { id: 'rec', t: 'Diyaliz reçetesi', d: 'Reçete alanları yeni aya kendiliğinden taşınır; yalnız değişeni düzeltin.', f: [
-        { k: 'erisim', l: 'Damar erişimi', t: 's', c: 1, o: ['AV fistül', 'AV greft', 'Tünelli kateter', 'Geçici kateter'] },
-        { k: 'igne', l: 'İğne çapı', t: 's', c: 1, o: ['17G', '16G', '15G', '14G', 'Kateter'] },
         { k: 'qb', l: 'Kan akım hızı (Qb)', u: 'mL/dk', t: 'n', c: 1, mn: 100, mx: 600 },
         { k: 'qd', l: 'Diyalizat akım hızı (Qd)', u: 'mL/dk', t: 'n', c: 1, mn: 200, mx: 1000 },
         { k: 'membran', l: 'Yöntem / membran', t: 's', c: 1, o: ['HD, low-flux', 'HD, high-flux', 'HDF, post-dilüsyon', 'HDF, pre-dilüsyon'] },
@@ -101,9 +152,12 @@
         { k: 'odem', l: 'Ödem', t: 's', o: ODEM },
         { k: 'ahSayi', l: 'Antihipertansif ilaç sayısı', u: '', t: 'n', c: 1, mn: 0, mx: 8 }
       ] },
+      { id: 'kab', t: 'Potasyum ve asit-baz', d: 'Diyaliz öncesi K ve HCO₃; diyalizat potasyumu reçete bölümünde.', f: KAB },
       { id: 'ane', t: 'Anemi', d: 'Diyaliz öncesi Hb, ferritin ve TSAT; tedavi alanları yeni aya taşınır.', f: ANE },
       { id: 'mkb', t: 'KBH-MKB', d: 'Ca, P ve iPTH ile bağlayıcı, aktif D vitamini ve kalsimimetik tedavisi.', f: MKB },
       { id: 'nut', t: 'Nutrisyon', d: 'Albümin Diğer laboratuvar bölümünden alınır; kilo seyri aylık ağırlıklardan hesaplanır.', f: NUT },
+      { id: 'eri', t: 'Damar erişimi', d: 'Erişim türü ve kateter bilgisi yeni aya taşınır; kan akımı reçete bölümünde.', f: ERI_HD },
+      { id: 'enf', t: 'Enfeksiyon taraması ve aşı', d: 'Seroloji yapıldığı ayda girilir; aşı bilgileri yeni aya taşınır.', f: ENF },
       { id: 'lab', t: 'Diğer laboratuvar', d: 'Diyaliz öncesi değerler. Albümin düzeltilmiş kalsiyum için de kullanılır.', f: LAB }
     ],
     PD: [
@@ -145,9 +199,12 @@
         { k: 'raas', l: 'RAAS blokeri', t: 's', c: 1, o: ['Yok', 'ACEİ', 'ARB'] },
         { k: 'ahSayi', l: 'Antihipertansif ilaç sayısı', u: '', t: 'n', c: 1, mn: 0, mx: 8 }
       ] },
+      { id: 'kab', t: 'Potasyum ve asit-baz', d: 'Serum K ve HCO₃.', f: KAB },
       { id: 'ane', t: 'Anemi', d: 'Hb, ferritin ve TSAT; tedavi alanları yeni aya taşınır.', f: ANE },
       { id: 'mkb', t: 'KBH-MKB', d: 'Ca, P ve iPTH ile bağlayıcı, aktif D vitamini ve kalsimimetik tedavisi.', f: MKB },
       { id: 'nut', t: 'Nutrisyon', d: 'Albümin Diğer laboratuvar bölümünden alınır; kilo seyri aylık ağırlıklardan hesaplanır.', f: NUT.filter(function (f) { return f.only !== 'HD'; }) },
+      { id: 'eri', t: 'PD kateteri ve peritonit', d: 'Peritonit atakları, çıkış yeri ve kateter işlevi.', f: ERI_PD },
+      { id: 'enf', t: 'Enfeksiyon taraması ve aşı', d: 'Seroloji yapıldığı ayda girilir; aşı bilgileri yeni aya taşınır.', f: ENF },
       { id: 'lab', t: 'Diğer laboratuvar', d: 'Albümin düzeltilmiş kalsiyum için de kullanılır.', f: LAB }
     ]
   };
@@ -262,28 +319,26 @@
       { id: 'HD-R01', g: 'rec', s: 'warn', k: 'Kt/V < 1,4 ve Qb < 300 mL/dk', src: 'Uygulama pratiği', w: function (x) { var q = x.n('qb'); return x.c.ktv != null && x.c.ktv < 1.4 && q != null && q < 300 && 'Qb ' + q + ' mL/dk'; },
         o: 'Erişim izin veriyorsa kan akım hızının artırılması önerilir. İğne çapı akıma uygun seçilmelidir (yaklaşık: 17G < 300, 16G 300–350, 15G 350–450, 14G > 450 mL/dk).' },
       { id: 'HD-R02', g: 'rec', s: 'info', k: 'Kt/V < 1,2 ve Qd < 500 mL/dk', src: 'Uygulama pratiği', w: function (x) { var q = x.n('qd'); return x.c.ktv != null && x.c.ktv < 1.2 && q != null && q < 500 && 'Qd ' + q + ' mL/dk'; }, o: 'Diyalizat akımının 500 mL/dk düzeyine çıkarılması değerlendirilebilir.' },
-      { id: 'HD-R03', g: 'rec', s: 'bad', k: 'Diyalizat K < 2 mmol/L', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var d = x.n('dK'); return d != null && d < 2 && 'diyalizat K ' + tr(d, 1); },
+      { id: 'HD-R03', g: 'kab', s: 'bad', k: 'Diyalizat K < 2 mmol/L', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var d = x.n('dK'); return d != null && d < 2 && 'diyalizat K ' + tr(d, 1); },
         o: 'Düşük potasyumlu diyalizat ani kardiyak ölüm ve aritmi riskiyle ilişkilidir; 2 mmol/L altından kaçınılması önerilir.' },
-      { id: 'HD-R04', g: 'rec', s: 'warn', k: 'Giriş K < 4,0 ve diyalizat K ≤ 2', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var k = x.n('k'), d = x.n('dK'); return k != null && d != null && k < 4 && d <= 2 && d >= 2 && 'K ' + tr(k, 1) + ', diyalizat K ' + tr(d, 1); },
+      { id: 'HD-R04', g: 'kab', s: 'warn', k: 'Giriş K < 4,0 ve diyalizat K ≤ 2', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var k = x.n('k'), d = x.n('dK'); return k != null && d != null && k < 4 && d <= 2 && d >= 2 && 'K ' + tr(k, 1) + ', diyalizat K ' + tr(d, 1); },
         o: 'Serum-diyalizat potasyum farkını azaltmak için diyalizat potasyumunun 3 mmol/L düzeyine çıkarılması değerlendirilebilir; beslenme durumu ve ishal gibi kayıplar gözden geçirilmelidir.' },
-      { id: 'HD-R05', g: 'rec', s: 'warn', k: 'Giriş K 5,6–6,5 mmol/L', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var k = x.n('k'); return k != null && k > 5.5 && k <= 6.5 && 'K ' + tr(k, 1); },
+      { id: 'HD-R05', g: 'kab', s: 'warn', k: 'Giriş K 5,6–6,5 mmol/L', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var k = x.n('k'); return k != null && k > 5.5 && k <= 6.5 && 'K ' + tr(k, 1); },
         o: 'Diyet ve ilaçların (RAAS blokeri, NSAİİ), diyaliz dozunun, erişim resirkülasyonunun, asidoz ve kabızlığın gözden geçirilmesi; yineleyen durumda potasyum bağlayıcı değerlendirilmesi önerilir. Diyalizat potasyumu 3 ise 2 mmol/L düzeyine inilebilir.' },
-      { id: 'HD-R06', g: 'rec', s: 'bad', k: 'Giriş K > 6,5 mmol/L', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var k = x.n('k'); return k != null && k > 6.5 && 'K ' + tr(k, 1); },
+      { id: 'HD-R06', g: 'kab', s: 'bad', k: 'Giriş K > 6,5 mmol/L', src: 'KDIGO Tartışmalar Konferansı: potasyum (2020)', w: function (x) { var k = x.n('k'); return k != null && k > 6.5 && 'K ' + tr(k, 1); },
         o: 'Ciddi hiperpotasemi. Hemoliz dışlandıktan sonra EKG ile değerlendirme ve nedenin ivedilikle araştırılması önerilir; uzun diyaliz arası sonrası değerse program ve uyum gözden geçirilmelidir.' },
       { id: 'HD-R07', g: 'rec', s: 'warn', k: 'Diyalizat Ca 1,75 mmol/L', src: 'KDIGO KBH-MKB 2017, 4.1.4 (2C)', w: function (x) { return x.v.dCa === '1.75' && 'diyalizat Ca 1,75'; },
         o: 'Pozitif kalsiyum dengesinden kaçınmak için diyalizat kalsiyumunun 1,25–1,50 mmol/L aralığında tutulması önerilir.' },
       { id: 'HD-R08', g: 'rec', s: 'info', k: 'Düzeltilmiş Ca > 10,2 mg/dL ve diyalizat Ca 1,5', src: 'KDIGO KBH-MKB 2017, 4.1.3–4.1.4', w: function (x) { return x.v.dCa === '1.5' && x.c.dca != null && x.c.dca > 10.2 && 'düzeltilmiş Ca ' + tr(x.c.dca, 2); },
         o: 'Kalsiyum içeren bağlayıcı ve D vitamini dozları gözden geçirildikten sonra diyalizat kalsiyumunun 1,25 mmol/L düzeyine indirilmesi değerlendirilebilir.' },
-      { id: 'HD-R09', g: 'rec', s: 'warn', k: 'Giriş bikarbonat < 22 mmol/L', src: 'KDOQI Nutrisyon 2020, 6.1', w: function (x) { var h = x.n('hco3'); return h != null && h < 22 && 'HCO₃ ' + tr(h, 1); },
+      { id: 'HD-R09', g: 'kab', s: 'warn', k: 'Giriş bikarbonat < 22 mmol/L', src: 'KDOQI Nutrisyon 2020, 6.1', w: function (x) { var h = x.n('hco3'); return h != null && h < 22 && 'HCO₃ ' + tr(h, 1); },
         o: 'Metabolik asidoz. Diyaliz dozu, protein alımı ve interdiyalitik kilo alımı gözden geçirilerek diyalizat bikarbonatının artırılması veya oral bikarbonat eklenmesi değerlendirilebilir.' },
-      { id: 'HD-R10', g: 'rec', s: 'info', k: 'Giriş bikarbonat > 27 mmol/L', src: 'DOPPS gözlemsel veriler', w: function (x) { var h = x.n('hco3'); return h != null && h > 27 && 'HCO₃ ' + tr(h, 1); },
+      { id: 'HD-R10', g: 'kab', s: 'info', k: 'Giriş bikarbonat > 27 mmol/L', src: 'DOPPS gözlemsel veriler', w: function (x) { var h = x.n('hco3'); return h != null && h > 27 && 'HCO₃ ' + tr(h, 1); },
         o: 'Diyaliz öncesi alkaloz yetersiz protein alımını düşündürebilir. Beslenme durumunun değerlendirilmesi ve diyalizat bikarbonatının azaltılması düşünülebilir.' },
       { id: 'HD-R11', g: 'rec', s: 'info', k: 'Diyalizat Na ≥ 140 ve kilo alımı > %4', src: KDIGO_BP, w: function (x) { var d = x.n('dNa'); return d != null && d >= 140 && x.c.idwg != null && x.c.idwg > 4 && 'diyalizat Na ' + d + ', kilo alımı %' + tr(x.c.idwg, 1); },
         o: 'Yüksek diyalizat sodyumu susama ve kilo alımını artırabilir. Diyalizat sodyumunun 137–138 mmol/L düzeyine indirilmesi değerlendirilebilir; sodyum profili önerilmez.' },
       { id: 'HD-R12', g: 'rec', s: 'info', k: 'HDF, konveksiyon hacmi < 23 L/seans', src: 'CONVINCE (NEJM 2023); ESHOL', w: function (x) { var m = x.v.membran || '', k = x.n('konv'); return m.indexOf('post') > 0 && k != null && k < 23 && tr(k, 1) + ' L/seans'; },
         o: 'Post-dilüsyon HDF’de sağkalım yararı yüksek konveksiyon hacmiyle (≥ 23 L/seans) gösterilmiştir. Kan akımı, süre ve filtrasyon fraksiyonunun gözden geçirilmesi önerilir.' },
-      { id: 'HD-R13', g: 'rec', s: 'info', k: 'Damar erişimi kateter', src: 'KDOQI Damar Erişimi 2019', w: function (x) { return /kateter/i.test(x.v.erisim || '') && x.v.erisim; },
-        o: 'Hastanın yaşam planına uygun kalıcı erişim (AV fistül veya greft) seçeneğinin değerlendirilmesi ve kateter süresinin kısaltılması önerilir.' },
 
       { id: 'HD-V01', g: 'vol', s: 'bad', k: 'Ultrafiltrasyon hızı > 13 mL/kg/saat', src: KDOQI15 + ' 4.2; Flythe 2011', w: function (x) { return x.c.ufr != null && x.c.ufr > 13 && tr(x.c.ufr, 1) + ' mL/kg/saat'; },
         o: function (x) { return 'Yüksek UF hızı mortalite ve intradiyalitik hipotansiyonla ilişkilidir. Tuz kısıtlaması (< 5 g/gün) ile kilo alımının azaltılması ve seans süresinin uzatılması önerilir' + (x.c.t10 ? ': bu kilo alımıyla 13 mL/kg/saat için en az ' + x.c.t13 + ' dk, 10 mL/kg/saat için ' + x.c.t10 + ' dk gerekir.' : '.') + ' Gerekirse ek seans değerlendirilebilir.'; } },
@@ -340,11 +395,11 @@
       { id: 'PD-R02', g: 'rec', s: 'info', k: 'İkodekstrin yok; hızlı/yüksek-orta transport, ödem veya düşük UF var', src: 'ISPD 2015 (kardiyovasküler ve metabolik), 2.2', w: function (x) { var ik = x.n('iko'), p = x.n('pet'), u = x.n('uf'), od = x.v.odem && x.v.odem !== 'Yok'; if (ik == null || ik > 0) return false; var r = []; if (p != null && p >= 0.65) r.push('D/P ' + tr(p, 2)); if (od) r.push('ödem'); if (u != null && u < 500) r.push('UF ' + u + ' mL/gün'); return r.length ? r.join(', ') : false; },
         o: 'Uzun bekleme süreli değişimde günde bir kez ikodekstrin kullanımı ultrafiltrasyonu artırır ve glukoz maruziyetini azaltır; değerlendirilmesi önerilir.' },
       { id: 'PD-R03', g: 'rec', s: 'warn', k: 'İkodekstrin > 2,5 L/gün', src: 'Ürün bilgisi', w: function (x) { var ik = x.n('iko'); return ik != null && ik > 2.5 && tr(ik, 1) + ' L/gün'; }, o: 'İkodekstrin günde tek değişim olarak onaylıdır; reçetenin gözden geçirilmesi önerilir.' },
-      { id: 'PD-R04', g: 'rec', s: 'warn', k: 'Serum K < 3,5 mmol/L', src: 'ISPD Peritonit 2022; ' + ISPD20, w: function (x) { var k = x.n('k'); return k != null && k < 3.5 && 'K ' + tr(k, 1); },
+      { id: 'PD-R04', g: 'kab', s: 'warn', k: 'Serum K < 3,5 mmol/L', src: 'ISPD Peritonit 2022; ' + ISPD20, w: function (x) { var k = x.n('k'); return k != null && k < 3.5 && 'K ' + tr(k, 1); },
         o: 'PD’de hipopotasemi sıktır ve peritonit ile mortalite riskiyle ilişkilidir. Beslenmenin değerlendirilmesi, potasyumdan zengin diyet veya oral potasyum, uygun hastada mineralokortikoid reseptör antagonisti değerlendirilebilir.' },
-      { id: 'PD-R05', g: 'rec', s: 'warn', k: 'Serum K > 5,5 mmol/L', src: ISPD20, w: function (x) { var k = x.n('k'); return k != null && k > 5.5 && 'K ' + tr(k, 1); },
+      { id: 'PD-R05', g: 'kab', s: 'warn', k: 'Serum K > 5,5 mmol/L', src: ISPD20, w: function (x) { var k = x.n('k'); return k != null && k > 5.5 && 'K ' + tr(k, 1); },
         o: 'Değişimlere uyumun, diyetin, RAAS blokeri gibi ilaçların ve klirensin gözden geçirilmesi; yineleyen durumda potasyum bağlayıcı değerlendirilmesi önerilir.' },
-      { id: 'PD-R06', g: 'rec', s: 'info', k: 'Serum bikarbonat < 22 mmol/L', src: ISPD20, w: function (x) { var h = x.n('hco3'); return h != null && h < 22 && 'HCO₃ ' + tr(h, 1); }, o: 'Metabolik asidozun düzeltilmesi önerilir; klirens gözden geçirilmeli, oral bikarbonat eklenmesi değerlendirilebilir.' },
+      { id: 'PD-R06', g: 'kab', s: 'info', k: 'Serum bikarbonat < 22 mmol/L', src: ISPD20, w: function (x) { var h = x.n('hco3'); return h != null && h < 22 && 'HCO₃ ' + tr(h, 1); }, o: 'Metabolik asidozun düzeltilmesi önerilir; klirens gözden geçirilmeli, oral bikarbonat eklenmesi değerlendirilebilir.' },
       { id: 'PD-R07', g: 'rec', s: 'info', k: 'APD, gündüz dolumu yok, anürik ve Kt/V < 1,7', src: 'EBPG PD 2005; ' + ISPD20, w: function (x) { var gd = x.n('gunduz'), i = x.n('idrar'); return x.v.tip === 'APD' && (gd == null || gd === 0) && i != null && i < 100 && x.c.ktv != null && x.c.ktv < 1.7 && 'kuru gündüz'; },
         o: 'Gündüz dolumu (transport tipine göre ikodekstrin veya glukoz) eklenmesi klirensi ve orta molekül uzaklaştırılmasını artırır; değerlendirilmesi önerilir.' },
 
@@ -444,6 +499,115 @@
       { id: P + 'M16', g: 'mkb', s: 'info', k: 'iPTH üst sınırı girilmemiş', src: KM + ', Öneri 4.2.3', w: function (x) { return x.c.pthX != null && x.c.pthUstVars && 'varsayılan 65 pg/mL'; }, o: 'PTH hedefi testin üst sınırının katı olarak tanımlanır (2–9 ×). Laboratuvarınızın üst sınırının girilmesi önerilir; girilmezse 65 pg/mL kabul edilir.' }
     ];
   }
+  /* ---------------- Potasyum ve asit-baz ---------------- */
+  var KK = 'KDIGO Tartışmalar Konferansı: potasyum (2020)';
+  function kab(M) {
+    var P = M + '-', pd = M === 'PD';
+    return [
+      { id: P + 'K01', g: 'kab', s: 'warn', k: 'Potasyum bağlayıcı altında K < ' + (pd ? '3,5' : '4,0') + ' mmol/L', src: KK + '; ürün bilgileri', w: function (x) { var k = x.n('k'); return var_(x, 'kBag') && k != null && k < (pd ? 3.5 : 4) && 'K ' + tr(k, 1); }, o: 'Bağlayıcı dozunun azaltılması veya kesilmesi önerilir.' },
+      { id: P + 'K02', g: 'kab', s: 'warn', k: 'İki ardışık ölçümde K > 5,5 mmol/L, bağlayıcı yok', src: KK + '; DIALIZE (CJASN 2021)', w: function (x) { var k = x.n('k'), q = x.prevOf('k'); return !var_(x, 'kBag') && k != null && q != null && k > 5.5 && q > 5.5 && tr(q, 1) + ' → ' + tr(k, 1); },
+        o: pd ? 'Diyet, uyum ve ilaçlar gözden geçirildikten sonra potasyum bağlayıcı değerlendirilebilir (ör. sodyum zirkonyum siklosilikat 5 g/gün).' : 'Diyet, diyaliz dozu, resirkülasyon ve ilaçlar gözden geçirildikten sonra potasyum bağlayıcı değerlendirilebilir. Sodyum zirkonyum siklosilikat HD’de diyaliz dışı günlerde 5 g ile başlanır, 5 g basamaklarla en fazla 15 g’a çıkılabilir.' },
+      { id: P + 'K03', g: 'kab', s: 'info', k: 'Sodyum polistiren sülfonat kullanılıyor', src: 'Ürün bilgisi; FDA uyarısı', w: function (x) { return x.v.kBag === 'Sodyum polistiren sülfonat' && 'SPS'; }, o: 'Özellikle sorbitolle birlikte kolon nekrozu bildirilmiştir; sodyum yükü volümü artırabilir. Uzun süreli kullanımda daha yeni bağlayıcılar değerlendirilebilir; diğer oral ilaçlarla arasında en az 3 saat bırakılmalıdır.' },
+      { id: P + 'K04', g: 'kab', s: 'info', k: 'Sodyum zirkonyum siklosilikat ve volüm fazlalığı', src: 'Ürün bilgisi', w: function (x) { var od = x.v.odem && x.v.odem !== 'Yok'; return x.v.kBag === 'Sodyum zirkonyum siklosilikat' && (od || (x.c.idwg != null && x.c.idwg > 4.5)) && 'SZC + ' + (od ? 'ödem' : 'kilo alımı %' + tr(x.c.idwg, 1)); }, o: 'Her 5 g yaklaşık 400 mg sodyum içerir; ödem ve kilo alımı izlenmeli, gerekirse doz ve tuz alımı gözden geçirilmelidir.' },
+      { id: P + 'K05', g: 'kab', s: 'info', k: 'Kabızlık ve K > 5,0 mmol/L', src: KK, w: function (x) { var k = x.n('k'); return x.v.kabiz === 'Var' && k != null && k > 5 && 'K ' + tr(k, 1); }, o: 'Kolonik potasyum atılımı diyaliz hastasında önemlidir; kabızlığın tedavi edilmesi önerilir.' },
+      { id: P + 'K06', g: 'kab', s: 'info', k: 'K > 5,5 mmol/L ve RAAS blokeri / MRA kullanımı', src: KK, w: function (x) { var k = x.n('k'), i = x.v.kIlac || (x.v.raas && x.v.raas !== 'Yok' ? 'RAAS blokeri' : ''); return k != null && k > 5.5 && i && i !== 'Yok' && i !== 'Diğer' && i + ', K ' + tr(k, 1); }, o: 'Bu ilaçların kardiyovasküler ve rezidüel fonksiyon yararı göz önüne alınarak, kesmeden önce diyet, diyaliz ve bağlayıcı seçeneklerinin değerlendirilmesi önerilir.' },
+      { id: P + 'K07', g: 'kab', s: 'info', k: 'Oral bikarbonat altında HCO₃ > 26 mmol/L', src: 'KDOQI Nutrisyon 2020, 6.1', w: function (x) { var h = x.n('hco3'); return var_(x, 'bikarb') && h != null && h > 26 && 'HCO₃ ' + tr(h, 1); }, o: 'Oral bikarbonat dozunun azaltılması önerilir; sodyum yükü volümü artırabilir.' }
+    ];
+  }
+  /* ---------------- Damar erişimi / PD kateteri ve peritonit ---------------- */
+  var KV = 'KDOQI Damar Erişimi 2019; Oxford Handbook of Dialysis; Interventional Nephrology', KP = 'ISPD Peritonit 2022; ISPD Kateter enfeksiyonu 2023; Oxford Handbook of Dialysis';
+  var ERI_RULES_HD = [
+    { id: 'HD-E01', g: 'eri', s: 'warn', k: 'Erişim akımı düşük (fistül < 500, greft < 600 mL/dk)', src: KV, w: function (x) { var q = x.n('qa'), e = x.v.erisim || ''; return q != null && ((/fistül/.test(e) && q < 500) || (/greft/.test(e) && q < 600)) && 'Qa ' + tr(q) + ' mL/dk'; }, o: 'Darlık açısından fizik muayene ve görüntüleme (Doppler ultrason veya fistülografi) ile girişimsel nefroloji ya da damar cerrahisi değerlendirmesi önerilir.' },
+    { id: 'HD-E02', g: 'eri', s: 'warn', k: 'Erişim akımında önceki ölçüme göre > %25 düşüş', src: KV, w: function (x) { var q = x.n('qa'), b = x.prevOf('qa'); return q != null && b && (b - q) / b > 0.25 && tr(b) + ' → ' + tr(q) + ' mL/dk'; }, o: 'Belirgin akım düşüşü darlığı düşündürür; görüntüleme ile değerlendirme önerilir.' },
+    { id: 'HD-E03', g: 'eri', s: 'warn', k: 'Resirkülasyon > %10', src: KV, w: function (x) { var r = x.n('resirk'); return r != null && r > 10 && '%' + tr(r); }, o: 'İğne yerleşimi (ters bağlanma, iğneler arası mesafe) kontrol edilmeli; düzeltilemiyorsa venöz çıkış darlığı açısından değerlendirme önerilir.' },
+    { id: 'HD-E04', g: 'eri', s: 'warn', k: 'Dinamik venöz basınç > 150 mmHg', src: 'Oxford Handbook of Dialysis', w: function (x) { var v = x.n('venBas'); return v != null && v > 150 && tr(v) + ' mmHg'; }, o: 'Venöz çıkış darlığını düşündürür; fizik muayene ve görüntüleme önerilir.' },
+    { id: 'HD-E05', g: 'eri', s: 'warn', k: 'Erişim fizik muayenesinde anormal bulgu', src: KV, w: function (x) { return x.v.fm && x.v.fm !== 'Normal' && x.v.fm; },
+      o: function (x) { var f = x.v.fm; return (/Zayıf/.test(f) ? 'Zayıf thrill veya üfürüm giriş darlığını ya da tromboz riskini düşündürür.' : /Hiperpulsatil|çökmüyor/.test(f) ? 'Hiperpulsatilite ve kol kaldırmada venin çökmemesi çıkış darlığını düşündürür.' : /kanama/.test(f) ? 'Uzamış kanama artmış intraaksess basıncı, yani venöz darlığı düşündürür; antikoagülan dozu da gözden geçirilmelidir.' : 'Kol veya yüz ödemi santral ven darlığını düşündürür.') + ' Görüntüleme ve girişimsel değerlendirme önerilir.'; } },
+    { id: 'HD-E06', g: 'eri', s: 'warn', k: 'Kateterde Qb < 300 mL/dk', src: KV + '; CDT Nephrology & Hypertension', w: function (x) { var q = x.n('qb'); return /kateter/i.test(x.v.erisim || '') && q != null && q < 300 && 'Qb ' + tr(q) + ' mL/dk'; }, o: 'Kateter disfonksiyonu. Hasta pozisyonu ve lümenlerin ters bağlanması denenebilir; trombotik tıkanıklıkta lümen başına 2 mg alteplaz 30–60 dk (yanıt yoksa interdiyalitik) bekletilebilir. Yineleyen disfonksiyonda fibrin kılıfı açısından değerlendirme ve kateter değişimi önerilir.' },
+    { id: 'HD-E07', g: 'eri', s: 'info', k: 'Ayda ≥ 2 alteplaz uygulaması', src: KV, w: function (x) { var a = x.n('alteplaz'); return a != null && a >= 2 && a + ' kez'; }, o: 'Yineleyen trombotik disfonksiyon; kilit solüsyonu, kateter ucu konumu ve fibrin kılıfı değerlendirilmeli, kateter değişimi ve kalıcı erişim planı gözden geçirilmelidir.' },
+    { id: 'HD-E08', g: 'eri', s: 'info', k: 'Kateterle diyaliz', src: KV, w: function (x) { var e = x.v.erisim || ''; if (!/kateter/i.test(e)) return false; var d = aylar(x.v.katBas, x.ay); return e + (d != null ? ', ' + d + '. ay' : ''); },
+      o: function (x) { var d = aylar(x.v.katBas, x.ay); return 'Hastanın yaşam planına uygun kalıcı erişim (AV fistül veya greft) seçeneğinin değerlendirilmesi ve kateter süresinin kısaltılması önerilir.' + (d != null && d >= 3 ? ' Kateter 3 aydır ya da daha uzun süredir yerinde.' : '') + (x.v.erisim === 'Geçici kateter' ? ' Geçici kateter uzun süreli kullanım için uygun değildir; tünelli kateter veya kalıcı erişim planlanmalıdır.' : ''); } },
+    { id: 'HD-E09', g: 'eri', s: 'bad', k: 'Kateter ilişkili kan dolaşımı enfeksiyonu', src: KV + '; CDT Nephrology & Hypertension; Interventional Nephrology', w: function (x) { return x.v.crbsi === 'Var' && (x.v.etken || 'etken bilinmiyor'); },
+      o: function (x) { var e = x.v.etken || '', cik = /aureus|Pseudomonas|Candida/.test(e); return 'Kateter ve periferden kan kültürü alınarak ampirik Gram-pozitif (vankomisin veya sefazolin) ve Gram-negatif (seftazidim veya aminoglikozid) tedavi; komplike olmayan olguda sistemik tedaviye ek antibiyotik kilit önerilir. ' + (cik ? 'S. aureus, Pseudomonas veya Candida etkeninde kateterin çıkarılması önerilir. ' : 'Kateter çıkarma endikasyonları: S. aureus, Pseudomonas, Candida, 48–72 saatlik tedaviye rağmen süren ateş veya bakteriyemi, tünel enfeksiyonu, septik tromboflebit, endokardit, metastatik enfeksiyon. ') + 'Süre: komplike olmayan koagülaz negatif stafilokokta 10–14 gün; S. aureus, Pseudomonas ve komplike olgularda 3–4 hafta.'; } },
+    { id: 'HD-E10', g: 'eri', s: 'warn', k: 'Kateter çıkış yeri enfeksiyonu', src: 'Oxford Handbook of Dialysis; Interventional Nephrology', w: function (x) { return x.v.esi === 'Enfekte' && x.v.tunel !== 'Var' && 'çıkış yeri'; }, o: 'Kültür alınarak topikal bakım ve oral antibiyotik (ör. sefaleksin) önerilir; yanıt yoksa veya bakteriyemi gelişirse kateter değişimi değerlendirilmelidir.' },
+    { id: 'HD-E11', g: 'eri', s: 'bad', k: 'Tünel enfeksiyonu', src: 'Interventional Nephrology; CDT Nephrology & Hypertension', w: function (x) { return x.v.tunel === 'Var' && 'tünel'; }, o: 'Tünel enfeksiyonunda parenteral antibiyotik ve genellikle kateterin çıkarılması gerekir; yeni kateter farklı bir yerden takılmalıdır.' }
+  ];
+  var ERI_RULES_PD = [
+    { id: 'PD-E01', g: 'eri', s: 'bad', k: 'Peritonit: diyalizat lökosit > 100/µL ve nötrofil > %50', src: KP, w: function (x) { var l = x.n('pLok'), p = x.n('pPmn'); return (l != null && l > 100 && p != null && p > 50 || x.v.perit === 'Var') && (l != null ? 'lökosit ' + tr(l) + '/µL' + (p != null ? ', nötrofil %' + tr(p) : '') : 'peritonit'); },
+      o: 'Tanı için şu üç ölçütten ikisi gerekir: karın ağrısı ve/veya bulanık diyalizat, lökosit > 100/µL ve nötrofil > %50 (en az 2 saatlik bekleme sonrası), pozitif Gram boyama veya kültür. Kültür alındıktan sonra intraperitoneal ampirik tedavi önerilir: Gram-pozitif için sefazolin veya vankomisin, Gram-negatif için seftazidim veya aminoglikozid. Antibiyotik süresince fungal profilaksi (nistatin veya flukonazol) eklenmelidir.' },
+    { id: 'PD-E02', g: 'eri', s: 'warn', k: 'Peritonit etkenine göre tedavi süresi', src: KP, w: function (x) { var e = x.v.pEtken; return e && e !== 'Kültür bekleniyor' && e !== 'Fungal' && e; },
+      o: function (x) { var e = x.v.pEtken; return /Koagülaz|Streptokok|Kültür negatif/.test(e) ? 'Önerilen süre 2 haftadır (14 gün).' : /Pseudomonas/.test(e) ? 'Önerilen süre 3 haftadır; farklı mekanizmalı iki antibiyotik kullanılmalıdır. Eşlik eden çıkış yeri veya tünel enfeksiyonunda kateter çıkarılmalıdır.' : /Polimikrobiyal/.test(e) ? 'Enterik polimikrobiyal peritonitte cerrahi patoloji (perforasyon) araştırılmalıdır; süre 3 haftadır, anaerop kapsamı eklenmelidir.' : 'Önerilen süre 3 haftadır (21 gün).'; } },
+    { id: 'PD-E03', g: 'eri', s: 'bad', k: 'Fungal peritonit', src: KP, w: function (x) { return x.v.pEtken === 'Fungal' && 'fungal'; }, o: 'Fungal peritonitte kateterin hemen çıkarılması ve antifungal tedavi önerilir.' },
+    { id: 'PD-E04', g: 'eri', s: 'bad', k: 'Refrakter peritonit: 5. günde yanıt yok', src: KP, w: function (x) { return x.v.pYanit === 'Düzelmedi' && 'refrakter'; }, o: 'Uygun antibiyotiğe rağmen 5. günde diyalizat berraklaşmıyorsa peritonu korumak için kateterin çıkarılması önerilir.' },
+    { id: 'PD-E05', g: 'eri', s: 'bad', k: 'Relaps peritonit', src: KP, w: function (x) { return x.v.pRelaps === 'Var' && 'relaps'; }, o: 'Tedavi bitiminden sonraki 4 hafta içinde aynı etkenle yineleyen peritonitte kateterin çıkarılması (veya diyalizat berraklaştıktan sonra eş zamanlı değişimi) önerilir.' },
+    { id: 'PD-E06', g: 'eri', s: 'warn', k: 'Çıkış yeri enfeksiyonu', src: KP, w: function (x) { return x.v.esi === 'Enfekte' && 'enfekte'; }, o: 'Kültür alınarak oral antibiyotik önerilir (Gram-pozitif için sefaleksin, Pseudomonas riski varsa siprofloksasin); süre en az 14 gün, S. aureus ve Pseudomonas’ta 21 gün. Yanıtsızlıkta veya tünel tutulumunda kateter değişimi değerlendirilmelidir.' },
+    { id: 'PD-E07', g: 'eri', s: 'info', k: 'Çıkış yerinde şüpheli bulgu', src: KP, w: function (x) { return x.v.esi === 'Şüpheli' && 'şüpheli'; }, o: 'Günlük çıkış yeri bakımının yoğunlaştırılması, kültür alınması ve kısa aralıkla yeniden değerlendirme önerilir.' },
+    { id: 'PD-E08', g: 'eri', s: 'warn', k: 'Tünel enfeksiyonu', src: KP, w: function (x) { return x.v.tunel === 'Var' && 'tünel'; }, o: 'Ultrasonografi ile değerlendirme ve uzun süreli antibiyotik önerilir; peritonitle birlikte olan veya yanıtsız tünel enfeksiyonunda kateter çıkarılmalıdır.' },
+    { id: 'PD-E09', g: 'eri', s: 'info', k: 'Çıkış yeri profilaksisi yok', src: KP, w: function (x) { return x.v.profil === 'Yok' && 'profilaksi yok'; }, o: 'Çıkış yerine günlük topikal antibiyotik (mupirosin veya gentamisin) uygulanması önerilir; çıkış yeri enfeksiyonu ve peritonit riskini azaltır.' },
+    { id: 'PD-E10', g: 'eri', s: 'info', k: 'Son 12 ayda ≥ 2 peritonit atağı', src: 'ISPD Peritonit 2022 (ünite hedefi < 0,4 atak/hasta-yıl)', w: function (x) { var s = x.n('pSay'); return s != null && s >= 2 && s + ' atak'; }, o: 'Değişim tekniğinin yeniden değerlendirilmesi ve eğitimin yinelenmesi, burun S. aureus taşıyıcılığı, kabızlık ve hipopotaseminin gözden geçirilmesi önerilir.' },
+    { id: 'PD-E11', g: 'eri', s: 'info', k: 'Kateter drenaj sorunu veya kaçak', src: 'Oxford Handbook of Dialysis; ISPD Kateter 2019', w: function (x) { return x.v.kFonk && x.v.kFonk !== 'Normal' && x.v.kFonk; }, o: function (x) { return x.v.kFonk === 'Kaçak' ? 'Kaçakta dolum volümünün azaltılması veya PD’ye geçici ara verilmesi, kaçak yerinin değerlendirilmesi önerilir.' : 'Kabızlığın tedavisi, kateter ucunun direkt grafiyle değerlendirilmesi ve fibrin tıkacı için intraperitoneal heparin önerilir; düzelmezse omentum sarılması açısından cerrahi değerlendirme gerekebilir.'; } }
+  ];
+  /* ---------------- Enfeksiyon taraması ve aşı ---------------- */
+  var KE = 'CDC diyaliz enfeksiyon önlemleri; Oxford Handbook of Dialysis; Nephrology and Hypertension Board Review';
+  function duyarli(x) { var s = x.n('antiHbs'), sp = s != null ? s : x.prevOf('antiHbs'), hb = x.v.hbsag || x.lastS('hbsag'); return hb !== 'Pozitif' && (sp == null || sp < 10); }
+  function enf(M) {
+    var P = M + '-', pd = M === 'PD';
+    return [
+      { id: P + 'S01', g: 'enf', s: 'warn', k: 'HBsAg pozitif', src: KE + '; Yönetmelik Madde 10/6', w: function (x) { return x.v.hbsag === 'Pozitif' && 'HBsAg +'; }, o: pd ? 'HBV DNA, karaciğer değerlendirmesi ve antiviral tedavi açısından hepatoloji ile birlikte izlem; aile bireylerinin taranması ve aşılanması önerilir.' : 'Ayrılmış cihaz ve alanda diyaliz (seropozitif cihaz), HBV DNA, karaciğer değerlendirmesi ve antiviral tedavi açısından hepatoloji ile birlikte izlem önerilir.' },
+      { id: P + 'S02', g: 'enf', s: 'warn', k: 'Anti-HCV pozitif', src: 'KDIGO HCV 2022; ' + KE, w: function (x) { return (x.v.antiHcv === 'Pozitif' || x.v.hcvRna === 'Pozitif') && (x.v.hcvRna ? 'HCV RNA ' + x.v.hcvRna.toLocaleLowerCase('tr') : 'anti-HCV +'); }, o: 'HCV RNA ile aktif enfeksiyonun doğrulanması ve doğrudan etkili antiviral tedavi değerlendirmesi önerilir; nakil planlamasında tedavi zamanlaması nakil merkeziyle birlikte belirlenmelidir.' },
+      { id: P + 'S03', g: 'enf', s: 'warn', k: 'Anti-HIV pozitif', src: KE, w: function (x) { return x.v.antiHiv === 'Pozitif' && 'anti-HIV +'; }, o: 'Doğrulama testi ve enfeksiyon hastalıkları ile birlikte antiretroviral tedavi planı; ilaç dozlarının diyalize göre ayarlanması önerilir.' },
+      { id: P + 'S04', g: 'enf', s: 'warn', k: 'Hepatit B aşısız ve duyarlı', src: 'Oxford Handbook of Dialysis; ' + KE, w: function (x) { return x.v.hbvAsi === 'Aşısız' && duyarli(x) && 'aşısız'; }, o: 'Çift doz (40 µg) hepatit B aşısı önerilir: 0, 1, 2 ve 6. aylarda 40 µg (ör. 2 × 20 µg) ya da diyaliz formülasyonuyla 0, 1 ve 6. aylarda 40 µg. Seri bitiminden 1–2 ay sonra anti-HBs ölçülmelidir.' },
+      { id: P + 'S05', g: 'enf', s: 'warn', k: 'Aşı serisi sonrası anti-HBs < 10 mIU/mL', src: 'Oxford Handbook of Dialysis; ' + KE, w: function (x) { var s = x.n('antiHbs'); return x.v.hbvAsi === 'Seri tamamlandı' && s != null && s < 10 && 'anti-HBs ' + tr(s, 1); },
+        o: function (x) { var b = x.prevOf('antiHbs'); return b != null && b >= 10 ? 'Önceden yanıtlı hastada antikor 10 mIU/mL altına düşmüş; tek doz 40 µg rapel önerilir.' : 'Yanıt alınamamış; çift dozla tam serinin bir kez yinelenmesi önerilir. İki seri sonrası yanıtsız hasta duyarlı kabul edilir ve aylık HBsAg ile izlenir.'; } },
+      { id: P + 'S06', g: 'enf', s: 'info', k: 'Duyarlı hastada bu ay HBsAg bakılmamış', src: 'CDC diyaliz enfeksiyon önlemleri', w: function (x) { return !pd && x.any && duyarli(x) && x.v.hbsag == null && 'duyarlı'; }, o: 'Hepatit B’ye duyarlı (anti-HBs < 10, HBsAg negatif) HD hastasında HBsAg’ın aylık izlenmesi önerilir.' },
+      { id: P + 'S07', g: 'enf', s: 'info', k: 'Son 12 ayda anti-HBs ölçümü yok', src: 'CDC; Oxford Handbook of Dialysis', w: function (x) { return x.any && x.v.hbsag !== 'Pozitif' && x.lastS('hbsag') !== 'Pozitif' && !x.seen('antiHbs', 11) && 'anti-HBs yok'; }, o: 'Anti-HBs’nin yılda bir ölçülmesi ve 10 mIU/mL altına düştüğünde rapel yapılması önerilir.' },
+      { id: P + 'S08', g: 'enf', s: 'info', k: pd ? 'Son 12 ayda anti-HCV ölçümü yok' : 'Son 6 ayda anti-HCV ölçümü yok', src: 'KDIGO HCV 2022' + (pd ? '; PD için aralık uygulama tercihidir' : ''), w: function (x) { return x.any && x.v.antiHcv !== 'Pozitif' && x.lastS('antiHcv') !== 'Pozitif' && !x.seenS('antiHcv', pd ? 11 : 5) && 'anti-HCV yok'; }, o: pd ? 'Anti-HCV’nin yılda bir ölçülmesi önerilir.' : 'HD hastasında anti-HCV’nin 6 ayda bir ölçülmesi önerilir; açıklanamayan transaminaz yüksekliğinde HCV RNA bakılmalıdır.' },
+      { id: P + 'S09', g: 'enf', s: 'info', k: 'Son 12 ayda anti-HIV ölçümü yok', src: 'Uygulama tercihi; Yönetmelik Madde 23/2 (personel için yıllık tarama)', w: function (x) { return x.any && x.v.antiHiv !== 'Pozitif' && x.lastS('antiHiv') !== 'Pozitif' && !x.seenS('antiHiv', 11) && 'anti-HIV yok'; }, o: 'Anti-HIV’in yılda bir ölçülmesi önerilir.' },
+      { id: P + 'S10', g: 'enf', s: 'info', k: 'Bu sezon influenza aşısı yapılmamış', src: 'Nephrology and Hypertension Board Review; CDC', w: function (x) { var ay = parseInt(x.ay.slice(5, 7), 10), y = parseInt(x.ay.slice(0, 4), 10); var sez = ay >= 9 ? y + '-09' : ay <= 3 ? (y - 1) + '-09' : null; if (!sez) return false; var g = x.v.gripAy; return (!g || g < sez) && 'sezon ' + sez.slice(0, 4); }, o: 'Yıllık inaktif influenza aşısı önerilir (sonbahar).' },
+      { id: P + 'S11', g: 'enf', s: 'info', k: 'Pnömokok aşısı yok', src: 'Nephrology and Hypertension Board Review; CDC erişkin aşı takvimi', w: function (x) { return x.v.pnomo === 'Yok' && 'pnömokok'; }, o: 'PCV20 tek doz ya da PCV15 ve en az 8 hafta sonra PPSV23 önerilir.' },
+      { id: P + 'S12', g: 'enf', s: 'info', k: '≥ 50 yaş, rekombinant zona aşısı tamamlanmamış', src: 'CDC erişkin aşı takvimi', w: function (x) { var y = x.yas; return y != null && y >= 50 && x.v.zona && x.v.zona !== 'İki doz tamamlandı' && x.v.zona; }, o: 'Rekombinant (inaktif) zona aşısı 2 doz (2–6 ay arayla) önerilir.' },
+      { id: P + 'S13', g: 'enf', s: 'info', k: 'Td/Tdap 10 yıldan eski', src: 'CDC erişkin aşı takvimi', w: function (x) { var t = x.n('tdYil'); return t != null && parseInt(x.ay.slice(0, 4), 10) - t >= 10 && 'son ' + t; }, o: 'Td veya Tdap rapelinin yapılması önerilir.' },
+      { id: P + 'S14', g: 'enf', s: 'info', k: 'Nakil adayı: canlı aşı ve seroloji', src: 'KDIGO Nakil Adayı 2020', w: function (x) { return x.p.nakil && /Bekleme|yönlendirildi/.test(x.p.nakil) && 'nakil adayı'; }, o: 'Nakil adayında aşıların nakilden önce tamamlanması önerilir. Kızamık-kızamıkçık-kabakulak ve varisella seronegatifse canlı aşıların nakilden en az 4 hafta önce yapılması önerilir; immünsüpresyon başladıktan sonra canlı aşı yapılmaz.' }
+    ];
+  }
+  /* ---------------- Tetkik takvimi ---------------- */
+  function TAKVIM(p) {
+    var m = p.mod, hd = m === 'HD';
+    return [
+      { l: hd ? 'Kt/V ve URR' : 'Haftalık Kt/V ve kreatinin klirensi', k: hd ? ['preU', 'ktvlab'] : ['dVol', 'ktvlab'], i: hd ? 1 : 6, src: hd ? 'KDOQI 2006' : 'KDOQI 2006; ISPD 2020' },
+      { l: 'İdrar volümü (rezidüel fonksiyon)', k: ['idrar'], i: hd ? 3 : 6, src: hd ? 'KDOQI 2015' : 'ISPD 2020', hd: hd },
+      !hd ? { l: 'PET', k: ['pet'], i: 12, src: 'Uygulama tercihi; klinik değişiklikte daha erken' } : null,
+      { l: 'Hemoglobin', k: ['hb'], i: function (v) { return hd || (v && v.esa && v.esa !== 'Yok') ? 1 : 3; }, src: 'KDIGO Anemi 2026' },
+      { l: 'Ferritin ve TSAT', k: ['ferritin', 'tsat'], i: 3, src: 'KDIGO Anemi 2026 (HD 1–3 ay, PD 3 ay)' },
+      { l: 'Kalsiyum ve fosfor', k: ['ca', 'p'], i: hd ? 1 : 3, src: 'KDIGO KBH-MKB 2017 (1–3 ay)' },
+      { l: 'iPTH', k: ['pth'], i: function (v) { return v && ((v.vitD && v.vitD !== 'Yok') || (v.kalsim && v.kalsim !== 'Yok')) ? 3 : 6; }, src: 'KDIGO KBH-MKB 2017 (3–6 ay)' },
+      { l: 'ALP', k: ['alp'], i: 12, src: 'KDIGO KBH-MKB 2017' },
+      { l: '25(OH) D vitamini', k: ['d25'], i: 12, src: 'KDIGO KBH-MKB 2017; aralık uygulama tercihi' },
+      { l: 'Potasyum ve bikarbonat', k: ['k', 'hco3'], i: 1, src: 'Uygulama pratiği' },
+      { l: 'Albümin', k: ['alb'], i: 1, src: 'Nutrition in Kidney Disease; Oxford Handbook of Dialysis' },
+      { l: hd ? 'nPCR' : 'nPNA', k: ['npcr'], i: hd ? 1 : 6, src: 'Oxford Handbook of Dialysis' },
+      { l: 'SGA veya MIS', k: ['sga', 'mis'], i: 6, src: 'Nutrition in Kidney Disease (3–6 ay)' },
+      { l: 'Kolesterol', k: ['kol'], i: 12, src: 'Uygulama tercihi' },
+      p.dm === 'Var' ? { l: 'HbA1c', k: ['hba1c'], i: 3, src: 'KDIGO Diyabet 2022' } : null,
+      { l: 'HBsAg', k: ['hbsag'], i: function (v, x) { return hd && duyarli(x) ? 1 : null; }, src: 'CDC (duyarlı HD hastasında aylık)' },
+      { l: 'Anti-HBs', k: ['antiHbs'], i: function (v, x) { return (x.lastS('hbsag') === 'Pozitif') ? null : 12; }, src: 'CDC; Oxford Handbook of Dialysis' },
+      { l: 'Anti-HCV', k: ['antiHcv'], i: function (v, x) { return x.lastS('antiHcv') === 'Pozitif' ? null : (hd ? 6 : 12); }, src: 'KDIGO HCV 2022' },
+      { l: 'Anti-HIV', k: ['antiHiv'], i: function (v, x) { return x.lastS('antiHiv') === 'Pozitif' ? null : 12; }, src: 'Uygulama tercihi' },
+      !hd ? null : { l: 'Erişim akımı (Qa)', k: ['qa'], i: function (v) { return v && /fistül|greft/.test(v.erisim || '') ? 3 : null; }, src: 'Uygulama tercihi; KDOQI 2019 rutin gözetimi zorunlu tutmaz' }
+    ].filter(Boolean);
+  }
+  function takvim(p, ay) {
+    var ms = sortedMonths(p).filter(function (a) { return a <= ay; }), v = p.visits[ay] || p.visits[ms[ms.length - 1]] || {};
+    var x = { lastS: function (k) { for (var i = ms.length - 1; i >= 0; i--) { var q = p.visits[ms[i]][k]; if (q != null && q !== '') return q; } return null; }, n: function (k) { return val(p.mod, v, k); }, v: v, p: p };
+    x.prevOf = function (k) { for (var i = ms.length - 1; i >= 0; i--) { var q = val(p.mod, p.visits[ms[i]], k); if (q != null) return q; } return null; };
+    return TAKVIM(p).map(function (t) {
+      var iv = typeof t.i === 'function' ? t.i(v, x) : t.i; if (iv == null) return null;
+      var son = null; for (var i = ms.length - 1; i >= 0 && !son; i--) { var vv = p.visits[ms[i]]; if (t.k.some(function (k) { return vv[k] != null && vv[k] !== ''; })) son = ms[i]; }
+      var d = son ? aylar(son, ay) : null, durum = son == null ? 'yok' : d >= iv ? 'gecikti' : 'guncel';
+      var sonraki = null; if (son) { var y = parseInt(son.slice(0, 4), 10), mo = parseInt(son.slice(5, 7), 10) - 1 + iv; sonraki = (y + Math.floor(mo / 12)) + '-' + ('0' + (mo % 12 + 1)).slice(-2); }
+      return { l: t.l, i: iv, son: son, sonraki: sonraki, durum: durum, src: t.src };
+    }).filter(Boolean);
+  }
   /* ---------------- Nutrisyon (ISRNM; eBook: Nutrition in Kidney Disease, Oxford Handbook of Dialysis, CDT Nephrology) ---------------- */
   var KN = 'ISRNM PEW uzlaşısı (Fouque 2008); Nutrition in Kidney Disease; Oxford Handbook of Dialysis';
   function nut(M) {
@@ -476,9 +640,9 @@
           : 'HD: sodyum 2–3 g/gün (tuz < 6 g), potasyum 2–3 g/gün, fosfor 800–1000 mg/gün. İnorganik fosfat katkılı işlenmiş gıdalardan kaçınılması önerilir; fosfor kısıtlaması protein hedefini düşürmemelidir.' }
     ];
   }
-  RULES.HD = RULES.HD.concat(aneMkb('HD'), nut('HD'));
-  RULES.PD = RULES.PD.concat(aneMkb('PD'), nut('PD'));
-  var GRP = { yet: 'Diyaliz yeterliliği', rec: 'Diyaliz reçetesi', vol: 'Volüm ve kan basıncı', ane: 'Anemi', mkb: 'KBH-MKB', nut: 'Nutrisyon', lab: 'Diğer laboratuvar', mev: 'Mevzuat ve izlem' };
+  RULES.HD = RULES.HD.concat(kab('HD'), aneMkb('HD'), nut('HD'), ERI_RULES_HD, enf('HD'));
+  RULES.PD = RULES.PD.concat(kab('PD'), aneMkb('PD'), nut('PD'), ERI_RULES_PD, enf('PD'));
+  var GRP = { yet: 'Diyaliz yeterliliği', rec: 'Diyaliz reçetesi', vol: 'Volüm ve kan basıncı', kab: 'Potasyum ve asit-baz', ane: 'Anemi', mkb: 'KBH-MKB', nut: 'Nutrisyon', eri: 'Damar erişimi / kateter', enf: 'Enfeksiyon ve aşı', lab: 'Diğer laboratuvar', mev: 'Mevzuat ve izlem' };
 
   function sortedMonths(p) { return Object.keys(p.visits || {}).sort(); }
   function prevMonth(p, ay) { var m = sortedMonths(p).filter(function (a) { return a < ay; }); return m.length ? m[m.length - 1] : null; }
@@ -489,6 +653,7 @@
       prevOf: function (k) { var ms = sortedMonths(p).filter(function (a) { return a < ay; }); for (var i = ms.length - 1; i >= 0; i--) { var n = val(m, p.visits[ms[i]], k); if (n != null) return n; } return null; },
       back: function (k) { var ms = sortedMonths(p).filter(function (a) { return a < ay; }); return ms.length >= k ? p.visits[ms[ms.length - k]] : null; },
       yas: yas(p, ay),
+      lastS: function (k) { var ms = sortedMonths(p).filter(function (a) { return a <= ay; }); for (var i = ms.length - 1; i >= 0; i--) { var q = p.visits[ms[i]][k]; if (q != null && q !== '') return q; } return null; },
       seenS: function (k, n) { return sortedMonths(p).some(function (a) { var d = aylar(a, ay); return d != null && d >= 0 && d <= n && p.visits[a][k]; }); },
       seen: function (k, n) { return sortedMonths(p).some(function (a) { var d = aylar(a, ay); return d != null && d >= 0 && d <= n && val(m, p.visits[a], k) != null; }); },
       recent: function (ck, n) { return sortedMonths(p).some(function (a) { var d = aylar(a, ay); return d != null && d > 0 && d <= n && compute(p, p.visits[a], a)[ck] != null; }); } };
@@ -548,6 +713,6 @@
       ['Toplam sıvı çıkışı ≥ 1000 mL/gün', function (c) { return c.cikis == null ? null : c.cikis >= 1000; }], ['Serum K 3,5–5,5', function (c, n) { return n('k') == null ? null : n('k') >= 3.5 && n('k') <= 5.5; }], ['Hipertonik (%3,86) kullanılmıyor', function (c, n) { return n('s386') == null ? null : n('s386') === 0; }],
       ['Serum HCO₃ ≥ 22', function (c, n) { return n('hco3') == null ? null : n('hco3') >= 22; }], ['İdrar ≥ 100 mL/gün (rezidüel fonksiyon)', function (c, n) { return n('idrar') == null ? null : n('idrar') >= 100; }]].concat(KPI_ORT)
   };
-  root.DR = { SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
+  root.DR = { takvim: takvim, SCHEMA: SCHEMA, PFIELDS: PFIELDS, RULES: RULES, GRP: GRP, KPI: KPI, fieldsOf: fieldsOf, fieldMap: fieldMap, val: val, num: num, tr: tr, compute: compute, evaluate: evaluate, derived: derived, sortedMonths: sortedMonths, prevMonth: prevMonth, aylar: aylar,
     f: { watson: watson, bsa: bsa, spKtV: spKtV, eKtV: eKtV, stdKtV: stdKtV } };
 })(typeof window !== 'undefined' ? window : globalThis);
