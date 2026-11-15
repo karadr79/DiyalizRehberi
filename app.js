@@ -3,7 +3,7 @@
   'use strict';
   const D = window.DR, $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8.2', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
+  const AUT = 'Prof. Dr. Ekrem Kara · Prof. Dr. Tuncay Şahutoğlu', VER = '0.8.3', VDATE = '16.11.2026', KEY = 'diyaliz-rehberi-v1';
   const MODN = { HD: 'Hemodiyaliz', PD: 'Periton diyalizi' }, LVL = { bad: 'Öncelikli', warn: 'Uyarı', info: 'Bilgi', ok: 'Hedefte' };
   const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
   const ayAd = a => a ? AYLAR[parseInt(a.slice(5, 7), 10) - 1] + ' ' + a.slice(0, 4) : '—';
@@ -198,7 +198,9 @@
       const o = $('#out-' + g); if (o) { const d = der.filter(x => x.g === g); patch(o, d.map(x => [g + '|' + x.l, `<div${typeof x.v === 'string' && x.v.length > 24 ? ' class="kvw"' : ''}><small>${esc(x.l)}</small><strong>${fmt(x.v, x.d)}</strong> ${esc(x.u)}${x.note ? `<em>${esc(x.note)}</em>` : ''}</div>`]), (el, yeni) => pop(el, yeni ? 'dv-new' : 'dv-pop'), !!seen); o.hidden = !d.length; }
       const r = $('#rec-' + g); if (r) { const rs = ev.recs.filter(x => x.g === g); if (!rs.length) { r.innerHTML = g === 'mev' ? '<p class="cap">Bu ay için mevzuat hatırlatması yok.</p>' : ''; } else { if (r.querySelector(':scope > p.cap')) r.innerHTML = ''; patch(r, rs.map(x => [x.id, recHTML(x, v, !p.temp)]), (el, yeni) => { if (yeni && seen && !seen.has(el.dataset.key)) pop(el, 'rec-new'); else if (!yeni) pop(el, 'dv-pop'); }, !!seen); } }
     });
-    const ti = $('#v-tsat'); if (ti) { const sm = ti.closest('.f') && ti.closest('.f').querySelector('small'); ti.placeholder = ev.c.tsatHes != null ? D.tr(ev.c.tsatHes, 1) + ' (hesaplandı)' : ''; if (sm && !ti.value) sm.dataset.h = ev.c.tsatHes != null ? 'Demir / TDBK’den hesaplandı: %' + D.tr(ev.c.tsatHes, 1) : 'Boşsa demir / TDBK’den hesaplanır'; }
+    const ti = $('#v-tsat'); if (ti) { const f0 = ti.closest('.f'), sm = f0 && f0.querySelector('small'), man = v.tsat != null && v.tsat !== '';
+      if (!man) { const h = ev.c.tsatHes != null ? D.tr(ev.c.tsatHes, 1) : ''; if (document.activeElement !== ti) ti.value = h; ti.dataset.auto = h ? '1' : ''; f0 && f0.classList.toggle('auto', !!h); } else { ti.dataset.auto = ''; f0 && f0.classList.remove('auto'); }
+      if (sm) sm.dataset.h = !man && ev.c.tsatHes != null ? 'Demir / TDBK × 100 ile otomatik hesaplandı' : 'Boşsa demir / TDBK’den hesaplanır'; }
     const bad = new Set(ev.range.map(f => f.k));
     $$('#view .f[data-f]').forEach(el => { const k = el.dataset.f, f = fm[k], sm = el.querySelector('small'); if (!f || !sm || !el.querySelector('[data-k]')) return; const e = bad.has(k); el.classList.toggle('err', e); sm.textContent = e ? `Beklenen aralık ${D.tr(f.mn)}–${D.tr(f.mx)}; hesaba alınmadı` : sm.dataset.h; });
     const pb = $('#plan'); if (pb) { if (!ev.plan.length) pb.innerHTML = '<p class="cap">Doz önerisi için Hb, ferritin, Ca, P, iPTH ve K değerlerini ve mevcut ilaçları girin.</p>'; else { if (pb.querySelector(':scope > p.cap')) pb.innerHTML = ''; patch(pb, ev.plan.map(r => ['rx-' + r.k, rxHTML(r, v, !p.temp)]), (el, yeni) => pop(el, yeni ? 'rec-new' : 'dv-pop'), !!seen); } }
@@ -434,12 +436,13 @@
   });
   function onInput(e) {
     const t = e.target;
-    if (t.dataset.k) { const p = cur.p, v = p && p.visits[cur.ay]; if (!v) return; const val = t.dataset.k === 'plan' ? t.value : t.value.trim(); if (val === '') delete v[t.dataset.k]; else v[t.dataset.k] = val; if (!p.temp) save(); refresh(); }
+    if (t.dataset.k) { const p = cur.p, v = p && p.visits[cur.ay]; if (!v) return; if (t.dataset.auto === '1' && e.type === 'change') return; t.dataset.auto = ''; const val = t.dataset.k === 'plan' ? t.value : t.value.trim(); if (val === '') delete v[t.dataset.k]; else v[t.dataset.k] = val; if (!p.temp) save(); refresh(); }
     else if (t.dataset.pk) { const p = cur.p; if (!p) return; const val = t.value.trim(); if (val === '') delete p[t.dataset.pk]; else p[t.dataset.pk] = val; refresh(); }
     else if (t.dataset.dt) { const p = cur.p; if (!p) return; const o = p.demirTercih || {}, cur0 = D.ilacPlan(p, cur.ay).find(r => r.k === 'demir'), sc = (cur0 && cur0.secim) || {};
       p.demirTercih = t.dataset.dt === 'ad' ? { ad: t.value, i: 0 } : { ad: o.ad || sc.ad, i: parseInt(t.value, 10) || 0 }; if (!p.temp) save(); refresh(); }
     else if (t.id === 'yq') { $('#ylist').innerHTML = yonList(t.value.trim()); }
   }
+  document.addEventListener('focusout', e => { if (e.target && e.target.id === 'v-tsat') refresh(); });
   document.addEventListener('input', onInput); document.addEventListener('change', onInput);
   $('#menuBtn').addEventListener('click', () => $('#side').classList.toggle('open'));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#side').classList.remove('open'); });
